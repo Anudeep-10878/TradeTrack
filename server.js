@@ -1,5 +1,5 @@
 const express = require('express');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient } = require('mongodb');
 const cors = require('cors');
 const dotenv = require('dotenv');
 
@@ -44,27 +44,27 @@ app.get('/', (req, res) => {
 let isConnected = false;
 let db;
 
-// Create a MongoClient with a MongoClientOptions object
+// MongoDB connection options
 const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/tradetrack";
 console.log('MongoDB URI configured:', uri ? 'Yes' : 'No');
 
-const client = new MongoClient(uri, {
-    serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true
-    }
-});
+const options = {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    maxPoolSize: 50,
+    wtimeoutMS: 2500,
+    connectTimeoutMS: 10000
+};
 
 // Connect to MongoDB with retry logic
 async function connectToMongo() {
     try {
         console.log("Attempting to connect to MongoDB...");
         
-        await client.connect();
+        const client = await MongoClient.connect(uri, options);
         console.log("Connected to client!");
         
-        db = client.db();  // Use the database from the connection string
+        db = client.db();
         console.log("Selected database!");
         
         // Send a ping to confirm a successful connection
