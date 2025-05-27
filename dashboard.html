@@ -46,24 +46,42 @@
             </header>
 
             <div class="dashboard-container">
-                <div class="stats-section">
-                    <div class="stats-grid">
-                        <div class="stat-card profit">
+                <div class="main-metrics">
+                    <div class="metric-card profit">
+                        <div class="metric-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="metric-content">
                             <h3>Total Profit/Loss</h3>
                             <p class="value">₹25,420</p>
                             <p class="change positive">+5.2% <span>vs last period</span></p>
                         </div>
-                        <div class="stat-card trades">
+                    </div>
+                    <div class="metric-card trades">
+                        <div class="metric-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="metric-content">
                             <h3>Total Trades</h3>
                             <p class="value">48</p>
                             <p class="change">+12 trades today</p>
                         </div>
-                        <div class="stat-card win-rate">
+                    </div>
+                    <div class="metric-card win-rate">
+                        <div class="metric-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <div class="metric-content">
                             <h3>Win Rate</h3>
                             <p class="value">68%</p>
                             <p class="change positive">+2.3% <span>vs last period</span></p>
                         </div>
-                        <div class="stat-card avg-return">
+                    </div>
+                    <div class="metric-card avg-return">
+                        <div class="metric-icon">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div class="metric-content">
                             <h3>Average Return</h3>
                             <p class="value">₹530</p>
                             <p class="change negative">-1.2% <span>vs last period</span></p>
@@ -71,76 +89,62 @@
                     </div>
                 </div>
 
-                <div class="main-content-grid">
-                    <div class="content-left">
-                        <div class="recent-trades">
-                            <h2>Recent Trades</h2>
-                            <div class="trades-list">
-                                <div class="trade-item profit">
-                                    <div class="trade-info">
-                                        <h4>NIFTY 19400 CE</h4>
-                                        <p class="trade-time">Today, 10:30 AM</p>
-                                    </div>
-                                    <div class="trade-result">
-                                        <p class="profit">+₹1,250</p>
-                                        <span class="percentage">+2.5%</span>
-                                    </div>
+                <div class="content-grid">
+                    <div class="recent-trades">
+                        <h2>Recent Trades</h2>
+                        <div class="trades-list">
+                            <div class="trade-item profit">
+                                <div class="trade-info">
+                                    <h4>NIFTY 19400 CE</h4>
+                                    <p class="trade-time">Today, 10:30 AM</p>
                                 </div>
-                                <div class="trade-item loss">
-                                    <div class="trade-info">
-                                        <h4>BANKNIFTY 44500 PE</h4>
-                                        <p class="trade-time">Today, 09:45 AM</p>
-                                    </div>
-                                    <div class="trade-result">
-                                        <p class="loss">-₹850</p>
-                                        <span class="percentage">-1.7%</span>
-                                    </div>
+                                <div class="trade-result">
+                                    <p class="profit">+₹1,250</p>
+                                    <span class="percentage">+2.5%</span>
                                 </div>
-                                <div class="trade-item profit">
-                                    <div class="trade-info">
-                                        <h4>RELIANCE</h4>
-                                        <p class="trade-time">Yesterday, 03:15 PM</p>
-                                    </div>
-                                    <div class="trade-result">
-                                        <p class="profit">+₹2,100</p>
-                                        <span class="percentage">+3.2%</span>
-                                    </div>
+                            </div>
+                            <div class="trade-item loss">
+                                <div class="trade-info">
+                                    <h4>BANKNIFTY 44500 PE</h4>
+                                    <p class="trade-time">Today, 09:45 AM</p>
+                                </div>
+                                <div class="trade-result">
+                                    <p class="loss">-₹850</p>
+                                    <span class="percentage">-1.7%</span>
+                                </div>
+                            </div>
+                            <div class="trade-item profit">
+                                <div class="trade-info">
+                                    <h4>RELIANCE</h4>
+                                    <p class="trade-time">Yesterday, 03:15 PM</p>
+                                </div>
+                                <div class="trade-result">
+                                    <p class="profit">+₹2,100</p>
+                                    <span class="percentage">+3.2%</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="content-right">
-                        <div class="risk-metrics">
-                            <h2>Risk Metrics</h2>
-                            <div class="metrics-grid">
-                                <div class="metric-item">
-                                    <h4>Sharpe Ratio</h4>
-                                    <p>1.85</p>
-                                </div>
-                                <div class="metric-item">
-                                    <h4>Max Drawdown</h4>
-                                    <p>-12.3%</p>
-                                </div>
-                                <div class="metric-item">
-                                    <h4>Profit Factor</h4>
-                                    <p>2.1</p>
-                                </div>
-                                <div class="metric-item">
-                                    <h4>Risk/Reward</h4>
-                                    <p>1:2.5</p>
-                                </div>
+                    <div class="risk-metrics">
+                        <h2>Risk Metrics</h2>
+                        <div class="metrics-grid">
+                            <div class="metric-item">
+                                <h4>Sharpe Ratio</h4>
+                                <p>1.85</p>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bottom-grid">
-                    <div class="trading-journal">
-                        <h2>Trading Notes</h2>
-                        <div class="journal-entry">
-                            <textarea placeholder="Add your trading notes here..."></textarea>
-                            <button class="save-note-btn">Save Note</button>
+                            <div class="metric-item">
+                                <h4>Max Drawdown</h4>
+                                <p>-12.3%</p>
+                            </div>
+                            <div class="metric-item">
+                                <h4>Profit Factor</h4>
+                                <p>2.1</p>
+                            </div>
+                            <div class="metric-item">
+                                <h4>Risk/Reward</h4>
+                                <p>1:2.5</p>
+                            </div>
                         </div>
                     </div>
 
