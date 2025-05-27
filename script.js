@@ -99,53 +99,41 @@ function handleCredentialResponse(response) {
         const decoded = jwt_decode(credential);
         console.log('Successfully decoded token:', decoded);
         
-        // Save user data to localStorage first
+        // Save user data to localStorage immediately
         localStorage.setItem('user', JSON.stringify(decoded));
         console.log('User data saved to localStorage');
         
-        // First check if server is connected to MongoDB
-        console.log('Checking server status...');
+        // Redirect to dashboard immediately
+        console.log('Redirecting to dashboard...');
+        window.location.replace('dashboard.html');
+        
+        // After redirect, try to save user data to server
         fetch(`${API_URL}/status`)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Cannot connect to server. Please check your internet connection and try again.');
+                    throw new Error('Cannot connect to server');
                 }
                 return response.json();
             })
             .then(status => {
-                console.log('Server status:', status);
                 if (!status || status.mongodb === 'disconnected') {
-                    throw new Error('Server is temporarily unavailable. Please try again in a few minutes.');
+                    throw new Error('Server unavailable');
                 }
-                
-                // If connected, proceed with saving user
-                console.log('Attempting to save user to database');
                 return saveUserToDatabase(decoded);
             })
             .then(user => {
-                if (!user) {
-                    throw new Error('No user data received from server');
+                if (user) {
+                    // Update localStorage with server response
+                    localStorage.setItem('user', JSON.stringify(user));
                 }
-                console.log('User saved successfully:', user);
-                
-                // Update localStorage with server response
-                localStorage.setItem('user', JSON.stringify(user));
-                console.log('User data updated in localStorage');
-                
-                // Force redirect to dashboard
-                console.log('Redirecting to dashboard...');
-                window.location.replace('dashboard.html');
             })
             .catch(error => {
-                console.error('Error in authentication flow:', error);
-                // Even if server save fails, still redirect to dashboard
-                // since we have the decoded user data in localStorage
-                console.log('Redirecting to dashboard despite error...');
-                window.location.replace('dashboard.html');
+                console.error('Error saving to server:', error);
+                // User is already redirected, no need to handle error here
             });
     } catch (error) {
         console.error('Error in handleCredentialResponse:', error);
-        alert('An error occurred during sign in. Please check your internet connection and try again.');
+        alert('An error occurred during sign in. Please try again.');
     }
 }
 
@@ -229,28 +217,36 @@ function checkAuth() {
     if (!user) {
         // If no user and we're not already on the index page, redirect to index
         if (currentPage !== 'index.html') {
-            window.location.href = 'index.html';
+            window.location.replace('index.html');
         }
         return false;
     } else {
         // If user exists and we're on index page, redirect to dashboard
         if (currentPage === 'index.html') {
-            window.location.href = 'dashboard.html';
+            window.location.replace('dashboard.html');
             return false;
         }
         
         // Update dashboard if we're on the dashboard page
         if (currentPage === 'dashboard.html') {
             const userData = JSON.parse(user);
+            
+            // First update UI with local data
+            updateUserProfile();
+            
+            // Then try to get updated data from server
             getUserData(userData.email)
                 .then(updatedUser => {
-                    updateDashboardMetrics(updatedUser);
-                    updateRecentTrades(updatedUser.trades);
-                    updateUserProfile(); // Make sure profile is updated
+                    if (updatedUser) {
+                        localStorage.setItem('user', JSON.stringify(updatedUser));
+                        updateDashboardMetrics(updatedUser);
+                        updateRecentTrades(updatedUser.trades);
+                        updateUserProfile();
+                    }
                 })
                 .catch(error => {
                     console.error('Error fetching user data:', error);
-                    handleLogout();
+                    // Don't logout on server error, just show what we have
                 });
         }
         

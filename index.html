@@ -10,6 +10,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
+    <script>
+        // Check if user is already logged in
+        document.addEventListener('DOMContentLoaded', function() {
+            const user = localStorage.getItem('user');
+            if (user) {
+                window.location.replace('dashboard.html');
+            }
+        });
+    </script>
 </head>
 <body>
     <!-- Login Modal -->
@@ -22,7 +31,8 @@
                 <div id="g_id_onload"
                     data-client_id="417119645317-l1rbcfc2c0fm90tm6ado1dblk2f68cdp.apps.googleusercontent.com"
                     data-callback="handleCredentialResponse"
-                    data-auto_prompt="false">
+                    data-auto_prompt="false"
+                    data-auto_select="true">
                 </div>
                 <div class="g_id_signin"
                     data-type="standard"
