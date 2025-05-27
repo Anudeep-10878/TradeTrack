@@ -55,38 +55,68 @@ const options = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     maxPoolSize: 50,
-    wtimeoutMS: 2500,
-    connectTimeoutMS: 10000,
-    retryWrites: true
+    serverSelectionTimeoutMS: 30000,
+    socketTimeoutMS: 45000,
+    connectTimeoutMS: 30000,
+    retryWrites: true,
+    retryReads: true,
+    waitQueueTimeoutMS: 30000,
+    heartbeatFrequencyMS: 5000
 };
 
 // Connect to MongoDB with retry logic
 async function connectToMongo() {
-    try {
-        console.log("Attempting to connect to MongoDB...");
-        console.log("Connection options:", JSON.stringify(options, null, 2));
-        
-        const client = await MongoClient.connect(uri, options);
-        console.log("Connected to client!");
-        
-        db = client.db();
-        console.log("Selected database!");
-        
-        // Send a ping to confirm a successful connection
-        await db.command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
-        
-        isConnected = true;
-        return true;
-    } catch (err) {
-        console.error("Error connecting to MongoDB:", {
-            name: err.name,
-            message: err.message,
-            stack: err.stack,
-            code: err.code
-        });
-        isConnected = false;
-        return false;
+    let retryCount = 0;
+    const maxRetries = 5;
+    
+    while (retryCount < maxRetries) {
+        try {
+            console.log(`Attempting to connect to MongoDB (attempt ${retryCount + 1} of ${maxRetries})...`);
+            console.log("Connection options:", JSON.stringify(options, null, 2));
+            
+            const client = await MongoClient.connect(uri, options);
+            console.log("Connected to client!");
+            
+            db = client.db();
+            console.log("Selected database!");
+            
+            // Send a ping to confirm a successful connection
+            await db.command({ ping: 1 });
+            console.log("Pinged your deployment. You successfully connected to MongoDB!");
+            
+            // Add event listeners for connection issues
+            client.on('close', () => {
+                console.log('MongoDB connection closed');
+                isConnected = false;
+                // Attempt to reconnect
+                setTimeout(() => connectToMongo(), 5000);
+            });
+
+            client.on('error', (err) => {
+                console.error('MongoDB connection error:', err);
+                isConnected = false;
+            });
+            
+            isConnected = true;
+            return true;
+        } catch (err) {
+            console.error(`Error connecting to MongoDB (attempt ${retryCount + 1}):`, {
+                name: err.name,
+                message: err.message,
+                stack: err.stack,
+                code: err.code
+            });
+            
+            retryCount++;
+            if (retryCount < maxRetries) {
+                console.log(`Retrying in 5 seconds...`);
+                await new Promise(resolve => setTimeout(resolve, 5000));
+            } else {
+                console.error('Max retry attempts reached. Could not connect to MongoDB.');
+                isConnected = false;
+                return false;
+            }
+        }
     }
 }
 
