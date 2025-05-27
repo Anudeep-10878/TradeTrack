@@ -183,23 +183,40 @@ async function saveTrade(email, tradeData) {
 // Check authentication status
 function checkAuth() {
     const user = localStorage.getItem('user');
+    
+    // Get the current page
+    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    
     if (!user) {
-        window.location.href = 'index.html';
+        // If no user and we're not already on the index page, redirect to index
+        if (currentPage !== 'index.html') {
+            window.location.href = 'index.html';
+        }
         return false;
+    } else {
+        // If user exists and we're on index page, redirect to dashboard
+        if (currentPage === 'index.html') {
+            window.location.href = 'dashboard.html';
+            return false;
+        }
+        
+        // Update dashboard if we're on the dashboard page
+        if (currentPage === 'dashboard.html') {
+            const userData = JSON.parse(user);
+            getUserData(userData.email)
+                .then(updatedUser => {
+                    updateDashboardMetrics(updatedUser);
+                    updateRecentTrades(updatedUser.trades);
+                    updateUserProfile(); // Make sure profile is updated
+                })
+                .catch(error => {
+                    console.error('Error fetching user data:', error);
+                    handleLogout();
+                });
+        }
+        
+        return true;
     }
-    
-    const userData = JSON.parse(user);
-    getUserData(userData.email)
-        .then(updatedUser => {
-            updateDashboardMetrics(updatedUser);
-            updateRecentTrades(updatedUser.trades);
-        })
-        .catch(error => {
-            console.error('Error fetching user data:', error);
-            handleLogout();
-        });
-    
-    return true;
 }
 
 function updateDashboardMetrics(user) {
@@ -254,14 +271,10 @@ function handleLogout() {
     window.location.href = 'index.html';
 }
 
-// Initialize dashboard if on dashboard page
-if (document.querySelector('.dashboard-content')) {
-    document.addEventListener('DOMContentLoaded', function() {
-        if (checkAuth()) {
-            document.querySelector('.dashboard-content').classList.add('loaded');
-        }
-    });
-}
+// Add this function to check auth status when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+});
 
 // Navbar background effect on scroll
 const navbar = document.querySelector('.navbar');
