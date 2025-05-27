@@ -53,7 +53,12 @@ const options = {
     useUnifiedTopology: true,
     maxPoolSize: 50,
     wtimeoutMS: 2500,
-    connectTimeoutMS: 10000
+    connectTimeoutMS: 10000,
+    ssl: true,
+    tls: true,
+    tlsAllowInvalidCertificates: true,
+    tlsAllowInvalidHostnames: true,
+    retryWrites: true
 };
 
 // Connect to MongoDB with retry logic
