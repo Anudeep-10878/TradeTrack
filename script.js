@@ -84,17 +84,31 @@ function decodeJwtResponse(token) {
 
 // Google OAuth Configuration
 function handleCredentialResponse(response) {
-    const credential = response.credential;
-    const decoded = jwt_decode(credential);
-    
-    // Save user data to MongoDB
-    saveUserToDatabase(decoded)
-        .then(user => {
-            localStorage.setItem('user', JSON.stringify(user));
-            updateUIWithUserData(user);
-            window.location.href = 'dashboard.html';
-        })
-        .catch(error => console.error('Error saving user:', error));
+    console.log('Google Sign-In response received');
+    try {
+        const credential = response.credential;
+        console.log('Decoding JWT token');
+        const decoded = jwt_decode(credential);
+        console.log('Successfully decoded token');
+        
+        // Save user data to MongoDB
+        console.log('Attempting to save user to database');
+        saveUserToDatabase(decoded)
+            .then(user => {
+                console.log('User saved successfully:', user);
+                localStorage.setItem('user', JSON.stringify(user));
+                console.log('User data saved to localStorage');
+                console.log('Redirecting to dashboard...');
+                window.location.href = '/dashboard.html';
+            })
+            .catch(error => {
+                console.error('Error saving user:', error);
+                alert('Failed to save user data. Please try again.');
+            });
+    } catch (error) {
+        console.error('Error in handleCredentialResponse:', error);
+        alert('An error occurred during sign in. Please try again.');
+    }
 }
 
 const API_URL = 'https://tradetrack-58el.onrender.com';  // Render.com deployed backend URL
