@@ -615,11 +615,6 @@ footer {
 .dashboard-nav .logo img {
     height: 100px;
     margin-bottom: 2rem;
-    transition: transform 0.3s ease;
-}
-
-.dashboard-nav .logo img:hover {
-    transform: scale(1.05);
 }
 
 .dashboard-nav .nav-links {
