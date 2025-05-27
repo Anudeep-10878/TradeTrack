@@ -60,15 +60,23 @@ function updateUserProfile() {
         const profilePic = document.querySelector('.profile-pic');
         
         if (username && profilePic) {
-            // Update username - use given name if available, otherwise full name
-            username.textContent = user.given_name || user.name;
+            // For Google Sign-In, the name might be in different fields
+            const displayName = user.given_name || user.name || user.email.split('@')[0];
+            username.textContent = displayName;
             
-            // Update profile picture
+            // Update profile picture if available
             if (user.picture) {
                 profilePic.src = user.picture;
-                profilePic.alt = user.name;
+                profilePic.alt = displayName;
             }
+            
+            // Log the update for debugging
+            console.log('Updated profile:', { name: displayName, picture: user.picture });
+        } else {
+            console.error('Profile elements not found in DOM');
         }
+    } else {
+        console.error('No user data found in localStorage');
     }
 }
 

@@ -175,10 +175,25 @@
 
     <script src="script.js"></script>
     <script>
-        // Show content after DOM loads and authentication is verified
-        document.addEventListener('DOMContentLoaded', function() {
-            if (localStorage.getItem('user')) {
-                document.querySelector('.dashboard-content').classList.add('loaded');
+        // Initialize dashboard when DOM loads
+        document.addEventListener('DOMContentLoaded', async function() {
+            const user = localStorage.getItem('user');
+            if (user) {
+                try {
+                    // First update the user profile
+                    updateUserProfile();
+                    
+                    // Then show the dashboard content
+                    document.querySelector('.dashboard-content').classList.add('loaded');
+                    
+                    // Finally check auth and update other dashboard data
+                    checkAuth();
+                } catch (error) {
+                    console.error('Error initializing dashboard:', error);
+                    handleLogout();
+                }
+            } else {
+                window.location.href = 'index.html';
             }
         });
     </script>
