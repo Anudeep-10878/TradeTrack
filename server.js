@@ -52,7 +52,7 @@ const client = new MongoClient(uri, {
     serverApi: {
         version: ServerApiVersion.v1,
         strict: true,
-        deprecationErrors: true,
+        deprecationErrors: true
     }
 });
 
@@ -60,10 +60,11 @@ const client = new MongoClient(uri, {
 async function connectToMongo() {
     try {
         console.log("Attempting to connect to MongoDB...");
+        
         await client.connect();
         console.log("Connected to client!");
         
-        db = client.db("tradetrack");
+        db = client.db();  // Use the database from the connection string
         console.log("Selected database!");
         
         // Send a ping to confirm a successful connection
