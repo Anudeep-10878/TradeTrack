@@ -99,6 +99,10 @@ function handleCredentialResponse(response) {
         const decoded = jwt_decode(credential);
         console.log('Successfully decoded token:', decoded);
         
+        // Save user data to localStorage first
+        localStorage.setItem('user', JSON.stringify(decoded));
+        console.log('User data saved to localStorage');
+        
         // First check if server is connected to MongoDB
         console.log('Checking server status...');
         fetch(`${API_URL}/status`)
@@ -123,14 +127,21 @@ function handleCredentialResponse(response) {
                     throw new Error('No user data received from server');
                 }
                 console.log('User saved successfully:', user);
+                
+                // Update localStorage with server response
                 localStorage.setItem('user', JSON.stringify(user));
-                console.log('User data saved to localStorage');
+                console.log('User data updated in localStorage');
+                
+                // Force redirect to dashboard
                 console.log('Redirecting to dashboard...');
-                window.location.href = 'dashboard.html';
+                window.location.replace('dashboard.html');
             })
             .catch(error => {
                 console.error('Error in authentication flow:', error);
-                alert(error.message || 'Failed to connect to server. Please try again later.');
+                // Even if server save fails, still redirect to dashboard
+                // since we have the decoded user data in localStorage
+                console.log('Redirecting to dashboard despite error...');
+                window.location.replace('dashboard.html');
             });
     } catch (error) {
         console.error('Error in handleCredentialResponse:', error);

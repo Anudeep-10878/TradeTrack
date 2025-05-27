@@ -183,17 +183,22 @@
                     // First update the user profile
                     updateUserProfile();
                     
-                    // Then show the dashboard content
+                    // Show the dashboard content immediately
                     document.querySelector('.dashboard-content').classList.add('loaded');
                     
-                    // Finally check auth and update other dashboard data
-                    checkAuth();
+                    // Try to fetch updated data from server
+                    try {
+                        await checkAuth();
+                    } catch (serverError) {
+                        console.warn('Could not connect to server, using local data:', serverError);
+                        // Continue showing dashboard with local data
+                    }
                 } catch (error) {
                     console.error('Error initializing dashboard:', error);
                     handleLogout();
                 }
             } else {
-                window.location.href = 'index.html';
+                window.location.replace('index.html');
             }
         });
     </script>
