@@ -91,19 +91,28 @@ function handleCredentialResponse(response) {
         const decoded = jwt_decode(credential);
         console.log('Successfully decoded token');
         
-        // Save user data to MongoDB
-        console.log('Attempting to save user to database');
-        saveUserToDatabase(decoded)
+        // First check if server is connected to MongoDB
+        fetch(`${API_URL}/status`)
+            .then(response => response.json())
+            .then(status => {
+                if (status.mongodb === 'disconnected') {
+                    throw new Error('Database is currently unavailable. Please try again in a few minutes.');
+                }
+                
+                // If connected, proceed with saving user
+                console.log('Attempting to save user to database');
+                return saveUserToDatabase(decoded);
+            })
             .then(user => {
                 console.log('User saved successfully:', user);
                 localStorage.setItem('user', JSON.stringify(user));
                 console.log('User data saved to localStorage');
                 console.log('Redirecting to dashboard...');
-                window.location.href = '/dashboard.html';
+                window.location.href = 'dashboard.html';
             })
             .catch(error => {
-                console.error('Error saving user:', error);
-                alert('Failed to save user data. Please try again.');
+                console.error('Error:', error);
+                alert(error.message || 'Failed to save user data. Please try again.');
             });
     } catch (error) {
         console.error('Error in handleCredentialResponse:', error);
