@@ -197,4 +197,13 @@ document.addEventListener('DOMContentLoaded', () => {
             nextBtn.style.cursor = isAtEnd ? 'default' : 'pointer';
         });
     }
-}); 
+});
+
+function handleLogout() {
+    // Clear user data from localStorage
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    
+    // Redirect to landing page
+    window.location.href = 'index.html';
+} 
