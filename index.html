@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradeTrack - Master Your Trading Performance</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Sign in to TradeTrack</h2>
+            <p>Track your trading journey with TradeTrack</p>
+            <div class="login-options">
+                <div id="g_id_onload"
+                    data-client_id="417119645317-l1rbcfc2c0fm90tm6ado1dblk2f68cdp.apps.googleusercontent.com"
+                    data-callback="handleCredentialResponse"
+                    data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin"
+                    data-type="standard"
+                    data-size="large"
+                    data-theme="filled_black"
+                    data-text="sign_in_with"
+                    data-shape="rectangular"
+                    data-logo_alignment="left">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="navbar">
+        <div class="logo">
+            <img src="logo.png" alt="TradeTrack Logo">
+        </div>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#testimonials">Testimonials</a>
+            <a href="#about">About</a>
+            <a href="#" class="get-started-btn">Get Started</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <h1>Master Your <span class="highlight">Trading</span><br>Performance</h1>
+        <p class="tagline">Log It. Learn It. Level Up.</p>
+        <p class="hero-description">The ultimate trading journal to track, analyze, and improve your trading strategies with comprehensive performance metrics.</p>
+        <a href="#" class="cta-button">Start Trading Journal</a>
+    </section>
+
+    <section id="features" class="features">
+        <h2>Professional Trading Tools</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <i class="fas fa-chart-line"></i>
+                <h3>Advanced Analytics</h3>
+                <p>Comprehensive ROI calculations, profit/loss tracking, and performance metrics</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-tasks"></i>
+                <h3>Strategy Tracking</h3>
+                <p>Monitor multiple trading strategies and their individual performance</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-shield-alt"></i>
+                <h3>Risk Management</h3>
+                <p>Track stop losses, entry/exit points, and risk-reward ratios</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-balance-scale"></i>
+                <h3>Margin Tracking</h3>
+                <p>Automatic margin calculations and capital utilization analysis</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-mobile-alt"></i>
+                <h3>Mobile Ready</h3>
+                <p>Access your trading journal anywhere with responsive design</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-bolt"></i>
+                <h3>Real-time Updates</h3>
+                <p>Instant calculations and live performance dashboard</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="testimonials" class="testimonials">
+        <h2>What Our Traders Say</h2>
+        <div class="testimonials-container">
+            <button class="nav-btn prev-btn">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="testimonials-slider">
+                <div class="testimonial">
+                    <div class="testimonial-content">
+                        <h3>Arjun Mehta</h3>
+                        <p class="trader-location">Options Trader, Mumbai</p>
+                        <p class="quote">"TradeTrack has completely transformed my trading approach. The detailed analytics helped me identify patterns I was missing. My win rate improved by 40% in just 3 months."</p>
+                    </div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-content">
+                        <h3>Priya Sharma</h3>
+                        <p class="trader-location">Forex Trader, Bangalore</p>
+                        <p class="quote">"The risk management tools are exceptional. I can now track my positions with precision and make data-driven decisions. Best investment for my trading career."</p>
+                    </div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-content">
+                        <h3>Vikram Desai</h3>
+                        <p class="trader-location">Crypto Trader, Delhi</p>
+                        <p class="quote">"Being able to track multiple strategies simultaneously has been game-changing. The mobile app keeps me updated even when I'm on the move."</p>
+                    </div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-content">
+                        <h3>Rahul Kapoor</h3>
+                        <p class="trader-location">Equity Trader, Chennai</p>
+                        <p class="quote">"The performance metrics have revolutionized how I evaluate my trades. The detailed insights helped me optimize my strategy for better returns."</p>
+                    </div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-content">
+                        <h3>Neha Patel</h3>
+                        <p class="trader-location">Futures Trader, Ahmedabad</p>
+                        <p class="quote">"The journal's analytics have given me a new perspective on my trading patterns. I can now clearly see what works and what doesn't."</p>
+                    </div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-content">
+                        <h3>Arun Kumar</h3>
+                        <p class="trader-location">Commodity Trader, Kolkata</p>
+                        <p class="quote">"TradeTrack's risk analysis tools have helped me maintain better position sizing and risk management. My drawdowns have reduced significantly."</p>
+                    </div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-content">
+                        <h3>Sanjay Gupta</h3>
+                        <p class="trader-location">Index Trader, Pune</p>
+                        <p class="quote">"The ability to analyze multiple timeframes simultaneously has improved my entry and exit timing. A must-have tool for serious traders."</p>
+                    </div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-content">
+                        <h3>Maya Reddy</h3>
+                        <p class="trader-location">Options Trader, Hyderabad</p>
+                        <p class="quote">"The options analytics suite is phenomenal. It has transformed how I analyze and execute my trades. My success rate has improved dramatically."</p>
+                    </div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-content">
+                        <h3>Rajesh Iyer</h3>
+                        <p class="trader-location">Swing Trader, Bangalore</p>
+                        <p class="quote">"The pattern recognition features have been invaluable for my swing trading strategy. I can now spot opportunities I used to miss."</p>
+                    </div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-content">
+                        <h3>Anita Shah</h3>
+                        <p class="trader-location">Day Trader, Mumbai</p>
+                        <p class="quote">"The real-time performance tracking has revolutionized my day trading. I can now make quick adjustments to my strategy during market hours."</p>
+                    </div>
+                </div>
+            </div>
+            <button class="nav-btn next-btn">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </section>
+
+    <section id="about" class="about">
+        <h2>About Us</h2>
+        <div class="about-content">
+            <div class="profile-section">
+                <div class="profile-image">
+                    <img src="logo.png" alt="Anudeep">
+                </div>
+                <div class="profile-info">
+                    <h3>Anudeep</h3>
+                    <p class="title">Founder & Lead Developer</p>
+                    <p class="bio">A passionate developer and trader based in Hyderabad, India. With expertise in full-stack development and trading strategies, I created TradeTrack to help traders make data-driven decisions and improve their trading performance.</p>
+                </div>
+            </div>
+            <div class="expertise">
+                <h4>Technical Expertise</h4>
+                <div class="tags">
+                    <span>Full Stack Development</span>
+                    <span>Trading Algorithms</span>
+                    <span>UI/UX Design</span>
+                    <span>Risk Management</span>
+                    <span>Technical Analysis</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section">
+        <h2>Ready to Transform Your Trading?</h2>
+        <p>Join thousands of traders who have improved their performance with TradeTrack</p>
+        <a href="#" class="cta-button">Start Your Journey Today</a>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">
+                <img src="logo.png" alt="TradeTrack Logo">
+            </div>
+            <div class="footer-links">
+                <a href="#">Privacy</a>
+                <a href="#">Terms</a>
+                <a href="#">Support</a>
+            </div>
+            <p class="copyright">© 2025 TradeTrack. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html> 
