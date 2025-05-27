@@ -44,44 +44,36 @@ app.get('/', (req, res) => {
 let isConnected = false;
 let db;
 
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(process.env.MONGODB_URI || 'mongodb://localhost:27017', {
+// Create a MongoClient with a MongoClientOptions object
+const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/tradetrack";
+console.log('MongoDB URI configured:', uri ? 'Yes' : 'No');
+
+const client = new MongoClient(uri, {
     serverApi: {
         version: ServerApiVersion.v1,
         strict: true,
         deprecationErrors: true,
-    },
-    ssl: true,
-    tls: true,
-    tlsAllowInvalidCertificates: false,
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    retryWrites: true,
-    maxPoolSize: 10,
-    minPoolSize: 5,
-    maxIdleTimeMS: 60000,
-    connectTimeoutMS: 30000,
-    socketTimeoutMS: 45000
+    }
 });
 
 // Connect to MongoDB with retry logic
 async function connectToMongo() {
     try {
         console.log("Attempting to connect to MongoDB...");
-        console.log("MongoDB URI configured:", process.env.MONGODB_URI ? "Yes" : "No");
-        
         await client.connect();
+        console.log("Connected to client!");
+        
         db = client.db("tradetrack");
-        console.log("Connected to MongoDB!");
+        console.log("Selected database!");
         
         // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
+        await db.command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        
         isConnected = true;
         return true;
     } catch (err) {
-        console.error("Error connecting to MongoDB:", err);
-        console.error("Error details:", {
+        console.error("Error connecting to MongoDB:", {
             name: err.name,
             message: err.message,
             stack: err.stack
@@ -92,13 +84,26 @@ async function connectToMongo() {
 }
 
 // MongoDB connection status endpoint
-app.get('/status', (req, res) => {
-    res.json({
-        server: 'running',
-        mongodb: isConnected ? 'connected' : 'disconnected',
-        mongodbUri: process.env.MONGODB_URI ? 'configured' : 'missing',
-        environment: process.env.NODE_ENV || 'development'
-    });
+app.get('/status', async (req, res) => {
+    try {
+        if (!isConnected) {
+            // Try to connect if not connected
+            await connectToMongo();
+        }
+        
+        res.json({
+            server: 'running',
+            mongodb: isConnected ? 'connected' : 'disconnected',
+            mongodbUri: process.env.MONGODB_URI ? 'configured' : 'missing',
+            environment: process.env.NODE_ENV || 'development'
+        });
+    } catch (error) {
+        res.status(500).json({
+            server: 'running',
+            mongodb: 'error',
+            error: error.message
+        });
+    }
 });
 
 // Middleware to check DB connection
