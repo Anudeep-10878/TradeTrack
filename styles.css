@@ -5,6 +5,7 @@ html {
 
 :root {
     --primary-color: #FFD700;
+    --border-color: rgba(255, 215, 0, 0.3);
     --text-color: #FFFFFF;
     --background-color: #000000;
     --card-background: #000000;
@@ -714,13 +715,13 @@ footer {
     background-color: rgba(0, 0, 0, 0.5);
     padding: 2rem;
     border-radius: 12px;
-    border: 2px solid var(--primary-color);
+    border: 2px solid var(--border-color);
     transition: transform 0.3s ease;
     display: flex;
     gap: 1.5rem;
     align-items: center;
     position: relative;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.05);
 }
 
 .metric-card:hover {
@@ -728,19 +729,19 @@ footer {
 }
 
 .metric-icon {
-    background: rgba(255, 215, 0, 0.15);
+    background: rgba(255, 215, 0, 0.08);
     width: 60px;
     height: 60px;
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid rgba(255, 215, 0, 0.3);
+    border: 1px solid rgba(255, 215, 0, 0.15);
 }
 
 .metric-icon i {
     font-size: 24px;
-    color: var(--primary-color);
+    color: rgba(255, 215, 0, 0.7);
 }
 
 .metric-content {
@@ -777,10 +778,10 @@ footer {
     background-color: rgba(0, 0, 0, 0.5);
     padding: 1.5rem;
     border-radius: 12px;
-    border: 2px solid var(--primary-color);
+    border: 2px solid var(--border-color);
     height: 100%;
     position: relative;
-    box-shadow: 0 0 5px rgba(255, 215, 0, 0.1);
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.05);
 }
 
 .recent-trades h2,
@@ -790,7 +791,7 @@ footer {
     font-size: 1.2rem;
     margin-bottom: 1.5rem;
     padding-bottom: 0.5rem;
-    border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .change.positive {
