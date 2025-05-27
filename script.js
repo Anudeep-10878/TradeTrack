@@ -82,68 +82,148 @@ function decodeJwtResponse(token) {
     return JSON.parse(jsonPayload);
 }
 
-// Google Sign-In callback function
+// Google OAuth Configuration
 function handleCredentialResponse(response) {
-    // Decode the credential response
-    const responsePayload = decodeJwtResponse(response.credential);
+    const credential = response.credential;
+    const decoded = jwt_decode(credential);
     
-    // Store user info in localStorage with all available details
-    localStorage.setItem('user', JSON.stringify({
-        name: responsePayload.name,
-        given_name: responsePayload.given_name,
-        email: responsePayload.email,
-        picture: responsePayload.picture
-    }));
-
-    // Close modal
-    const modal = document.getElementById('loginModal');
-    if (modal) {
-        modal.classList.remove('show');
-        document.body.style.overflow = '';
-    }
-
-    // Redirect to dashboard
-    window.location.href = 'dashboard.html';
+    // Save user data to MongoDB
+    saveUserToDatabase(decoded)
+        .then(user => {
+            localStorage.setItem('user', JSON.stringify(user));
+            updateUIWithUserData(user);
+            window.location.href = 'dashboard.html';
+        })
+        .catch(error => console.error('Error saving user:', error));
 }
 
-// Authentication check function
-function checkAuth() {
-    // Check if we're on the dashboard page
-    if (window.location.pathname.includes('dashboard.html')) {
-        const user = JSON.parse(localStorage.getItem('user'));
-        
-        // If no user data or invalid user data, redirect to landing page
-        if (!user || !user.email) {
-            console.log('User not authenticated, redirecting to landing page');
-            window.location.href = 'index.html';
-            return false;
-        }
-        
-        // Update dashboard UI with user info
-        updateUserProfile();
-        return true;
+const API_URL = 'https://tradetrack-58el.onrender.com';  // Render.com deployed backend URL
+
+async function saveUserToDatabase(googleUser) {
+    const response = await fetch(`${API_URL}/api/user`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            email: googleUser.email,
+            name: googleUser.name,
+            picture: googleUser.picture
+        })
+    });
+    
+    if (!response.ok) {
+        throw new Error('Failed to save user');
     }
+    
+    return response.json();
+}
+
+async function getUserData(email) {
+    const response = await fetch(`${API_URL}/api/user/${email}`);
+    if (!response.ok) {
+        throw new Error('Failed to fetch user data');
+    }
+    return response.json();
+}
+
+async function saveTrade(email, tradeData) {
+    const response = await fetch(`${API_URL}/api/trade/${email}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(tradeData)
+    });
+    
+    if (!response.ok) {
+        throw new Error('Failed to save trade');
+    }
+    
+    return response.json();
+}
+
+// Check authentication status
+function checkAuth() {
+    const user = localStorage.getItem('user');
+    if (!user) {
+        window.location.href = 'index.html';
+        return false;
+    }
+    
+    const userData = JSON.parse(user);
+    getUserData(userData.email)
+        .then(updatedUser => {
+            updateDashboardMetrics(updatedUser);
+            updateRecentTrades(updatedUser.trades);
+        })
+        .catch(error => {
+            console.error('Error fetching user data:', error);
+            handleLogout();
+        });
+    
     return true;
 }
 
-// Run authentication check immediately when script loads
-document.addEventListener('DOMContentLoaded', function() {
-    checkAuth();
-});
-
-// Also check auth when the window gains focus (in case of logout in another tab)
-window.addEventListener('focus', function() {
-    checkAuth();
-});
-
-// Modify handleLogout to ensure proper cleanup
-function handleLogout() {
-    // Clear all user-related data from localStorage
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
+function updateDashboardMetrics(user) {
+    // Update total profit/loss
+    document.querySelector('.profit .value').textContent = 
+        `₹${user.metrics.total_profit_loss.toFixed(2)}`;
     
-    // Redirect to landing page
+    // Update total trades
+    document.querySelector('.trades .value').textContent = 
+        user.metrics.total_trades.toString();
+    
+    // Update win rate
+    document.querySelector('.win-rate .value').textContent = 
+        `${user.metrics.win_rate.toFixed(1)}%`;
+    
+    // Update average return
+    document.querySelector('.avg-return .value').textContent = 
+        `₹${user.metrics.average_return.toFixed(2)}`;
+}
+
+function updateRecentTrades(trades) {
+    const tradesList = document.querySelector('.trades-list');
+    tradesList.innerHTML = '';
+    
+    const recentTrades = trades.slice(-3).reverse();
+    
+    recentTrades.forEach(trade => {
+        const tradeItem = document.createElement('div');
+        tradeItem.className = `trade-item ${trade.profit_loss > 0 ? 'profit' : 'loss'}`;
+        
+        tradeItem.innerHTML = `
+            <div class="trade-info">
+                <h4>${trade.symbol}</h4>
+                <p class="trade-time">${new Date(trade.date).toLocaleString()}</p>
+            </div>
+            <div class="trade-result">
+                <p class="${trade.profit_loss > 0 ? 'profit' : 'loss'}">
+                    ${trade.profit_loss > 0 ? '+' : ''}₹${trade.profit_loss.toFixed(2)}
+                </p>
+                <span class="percentage">
+                    ${((trade.exit - trade.entry) / trade.entry * 100).toFixed(1)}%
+                </span>
+            </div>
+        `;
+        
+        tradesList.appendChild(tradeItem);
+    });
+}
+
+function handleLogout() {
+    localStorage.removeItem('user');
     window.location.href = 'index.html';
+}
+
+// Initialize dashboard if on dashboard page
+if (document.querySelector('.dashboard-content')) {
+    document.addEventListener('DOMContentLoaded', function() {
+        if (checkAuth()) {
+            document.querySelector('.dashboard-content').classList.add('loaded');
+        }
+    });
 }
 
 // Navbar background effect on scroll
