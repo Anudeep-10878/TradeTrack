@@ -89,12 +89,19 @@ function handleCredentialResponse(response) {
         const credential = response.credential;
         console.log('Decoding JWT token');
         const decoded = jwt_decode(credential);
-        console.log('Successfully decoded token');
+        console.log('Successfully decoded token:', decoded);
         
         // First check if server is connected to MongoDB
+        console.log('Checking server status...');
         fetch(`${API_URL}/status`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Server status check failed');
+                }
+                return response.json();
+            })
             .then(status => {
+                console.log('Server status:', status);
                 if (status.mongodb === 'disconnected') {
                     throw new Error('Database is currently unavailable. Please try again in a few minutes.');
                 }
@@ -111,7 +118,7 @@ function handleCredentialResponse(response) {
                 window.location.href = 'dashboard.html';
             })
             .catch(error => {
-                console.error('Error:', error);
+                console.error('Error in authentication flow:', error);
                 alert(error.message || 'Failed to save user data. Please try again.');
             });
     } catch (error) {
@@ -123,23 +130,30 @@ function handleCredentialResponse(response) {
 const API_URL = 'https://tradetrack-58el.onrender.com';  // Render.com deployed backend URL
 
 async function saveUserToDatabase(googleUser) {
-    const response = await fetch(`${API_URL}/api/user`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            email: googleUser.email,
-            name: googleUser.name,
-            picture: googleUser.picture
-        })
-    });
-    
-    if (!response.ok) {
-        throw new Error('Failed to save user');
+    try {
+        console.log('Making request to:', `${API_URL}/api/user`);
+        const response = await fetch(`${API_URL}/api/user`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                email: googleUser.email,
+                name: googleUser.name,
+                picture: googleUser.picture
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        }
+        
+        return response.json();
+    } catch (error) {
+        console.error('Error in saveUserToDatabase:', error);
+        throw new Error(`Failed to save user: ${error.message}`);
     }
-    
-    return response.json();
 }
 
 async function getUserData(email) {
