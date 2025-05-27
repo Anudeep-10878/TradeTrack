@@ -1,5 +1,5 @@
 const express = require('express');
-const { MongoClient } = require('mongodb');
+const { MongoClient, ServerApiVersion } = require('mongodb');
 const cors = require('cors');
 const dotenv = require('dotenv');
 
@@ -43,6 +43,7 @@ app.get('/', (req, res) => {
 // MongoDB connection status
 let isConnected = false;
 let db;
+let mongoClient = null;
 
 // MongoDB connection string parsing and configuration
 const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/tradetrack";
@@ -52,16 +53,15 @@ const sanitizedUri = uri.replace(/\/\/[^@]+@/, '//****:****@');
 console.log('MongoDB Connection String Format:', sanitizedUri);
 
 const options = {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    maxPoolSize: 50,
+    maxPoolSize: 10,
     serverSelectionTimeoutMS: 30000,
     socketTimeoutMS: 45000,
     connectTimeoutMS: 30000,
-    retryWrites: true,
-    retryReads: true,
-    waitQueueTimeoutMS: 30000,
-    heartbeatFrequencyMS: 5000
+    serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+    }
 };
 
 // Connect to MongoDB with retry logic
@@ -74,25 +74,36 @@ async function connectToMongo() {
             console.log(`Attempting to connect to MongoDB (attempt ${retryCount + 1} of ${maxRetries})...`);
             console.log("Connection options:", JSON.stringify(options, null, 2));
             
-            const client = await MongoClient.connect(uri, options);
+            // Close existing connection if any
+            if (mongoClient) {
+                await mongoClient.close();
+                mongoClient = null;
+            }
+            
+            // Create new client
+            mongoClient = new MongoClient(uri, options);
+            
+            // Connect to the client
+            await mongoClient.connect();
             console.log("Connected to client!");
             
-            db = client.db();
+            // Get database instance
+            db = mongoClient.db();
             console.log("Selected database!");
             
-            // Send a ping to confirm a successful connection
+            // Test the connection
             await db.command({ ping: 1 });
             console.log("Pinged your deployment. You successfully connected to MongoDB!");
             
             // Add event listeners for connection issues
-            client.on('close', () => {
-                console.log('MongoDB connection closed');
+            mongoClient.on('serverClosed', () => {
+                console.log('MongoDB server connection closed');
                 isConnected = false;
                 // Attempt to reconnect
                 setTimeout(() => connectToMongo(), 5000);
             });
 
-            client.on('error', (err) => {
+            mongoClient.on('error', (err) => {
                 console.error('MongoDB connection error:', err);
                 isConnected = false;
             });
@@ -119,6 +130,20 @@ async function connectToMongo() {
         }
     }
 }
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+    try {
+        if (mongoClient) {
+            await mongoClient.close();
+            console.log('MongoDB connection closed through app termination');
+        }
+        process.exit(0);
+    } catch (err) {
+        console.error('Error during graceful shutdown:', err);
+        process.exit(1);
+    }
+});
 
 // MongoDB connection status endpoint
 app.get('/status', async (req, res) => {
