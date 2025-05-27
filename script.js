@@ -106,16 +106,44 @@ function handleCredentialResponse(response) {
     window.location.href = 'dashboard.html';
 }
 
-// Check authentication status on dashboard page
-if (window.location.pathname.includes('dashboard.html')) {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (!user) {
-        // Redirect to home page if not authenticated
-        window.location.href = 'index.html';
-    } else {
+// Authentication check function
+function checkAuth() {
+    // Check if we're on the dashboard page
+    if (window.location.pathname.includes('dashboard.html')) {
+        const user = JSON.parse(localStorage.getItem('user'));
+        
+        // If no user data or invalid user data, redirect to landing page
+        if (!user || !user.email) {
+            console.log('User not authenticated, redirecting to landing page');
+            window.location.href = 'index.html';
+            return false;
+        }
+        
         // Update dashboard UI with user info
         updateUserProfile();
+        return true;
     }
+    return true;
+}
+
+// Run authentication check immediately when script loads
+document.addEventListener('DOMContentLoaded', function() {
+    checkAuth();
+});
+
+// Also check auth when the window gains focus (in case of logout in another tab)
+window.addEventListener('focus', function() {
+    checkAuth();
+});
+
+// Modify handleLogout to ensure proper cleanup
+function handleLogout() {
+    // Clear all user-related data from localStorage
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    
+    // Redirect to landing page
+    window.location.href = 'index.html';
 }
 
 // Navbar background effect on scroll
@@ -218,13 +246,4 @@ document.addEventListener('DOMContentLoaded', () => {
             nextBtn.style.cursor = isAtEnd ? 'default' : 'pointer';
         });
     }
-});
-
-function handleLogout() {
-    // Clear user data from localStorage
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    
-    // Redirect to landing page
-    window.location.href = 'index.html';
-} 
+}); 

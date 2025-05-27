@@ -8,127 +8,146 @@
     <link rel="apple-touch-icon" href="logo.png">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="script.js"></script>
+    <style>
+        .dashboard-content {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .dashboard-content.loaded {
+            opacity: 1;
+        }
+    </style>
 </head>
 <body class="dashboard-body">
-    <nav class="dashboard-nav">
-        <div class="logo">
-            <img src="logo.png" alt="TradeTrack Logo">
-        </div>
-        <div class="nav-links">
-            <a href="#" class="active"><i class="fas fa-chart-line"></i> Dashboard</a>
-            <a href="#"><i class="fas fa-book"></i> Journal</a>
-            <a href="#"><i class="fas fa-chart-pie"></i> Analytics</a>
-            <a href="#"><i class="fas fa-cog"></i> Settings</a>
-        </div>
-        <div class="user-profile">
-            <div class="user-info">
-                <img src="logo.png" alt="Profile" class="profile-pic">
-                <span class="username">Anudeep</span>
+    <div class="dashboard-content">
+        <nav class="dashboard-nav">
+            <div class="logo">
+                <img src="logo.png" alt="TradeTrack Logo">
             </div>
-            <a href="#" class="logout-btn" onclick="handleLogout()">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Logout</span>
-            </a>
-        </div>
-    </nav>
+            <div class="nav-links">
+                <a href="#" class="active"><i class="fas fa-chart-line"></i> Dashboard</a>
+                <a href="#"><i class="fas fa-book"></i> Journal</a>
+                <a href="#"><i class="fas fa-chart-pie"></i> Analytics</a>
+                <a href="#"><i class="fas fa-cog"></i> Settings</a>
+            </div>
+            <div class="user-profile">
+                <div class="user-info">
+                    <img src="logo.png" alt="Profile" class="profile-pic">
+                    <span class="username">Anudeep</span>
+                </div>
+                <a href="#" class="logout-btn" onclick="handleLogout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </nav>
 
-    <main class="dashboard-main">
-        <header class="dashboard-header">
-            <h1>Dashboard</h1>
-        </header>
+        <main class="dashboard-main">
+            <header class="dashboard-header">
+                <h1>Dashboard</h1>
+            </header>
 
-        <div class="stats-grid">
-            <div class="stat-card profit">
-                <h3>Total Profit/Loss</h3>
-                <p class="value">₹25,420</p>
-                <p class="change positive">+5.2% <span>vs last period</span></p>
-            </div>
-            <div class="stat-card trades">
-                <h3>Total Trades</h3>
-                <p class="value">48</p>
-                <p class="change">+12 trades today</p>
-            </div>
-            <div class="stat-card win-rate">
-                <h3>Win Rate</h3>
-                <p class="value">68%</p>
-                <p class="change positive">+2.3% <span>vs last period</span></p>
-            </div>
-            <div class="stat-card avg-return">
-                <h3>Average Return</h3>
-                <p class="value">₹530</p>
-                <p class="change negative">-1.2% <span>vs last period</span></p>
-            </div>
-        </div>
-
-        <div class="dashboard-grid">
-            <div class="recent-trades">
-                <h2>Recent Trades</h2>
-                <div class="trades-list">
-                    <div class="trade-item profit">
-                        <div class="trade-info">
-                            <h4>NIFTY 19400 CE</h4>
-                            <p class="trade-time">Today, 10:30 AM</p>
-                        </div>
-                        <div class="trade-result">
-                            <p class="profit">+₹1,250</p>
-                            <span class="percentage">+2.5%</span>
-                        </div>
-                    </div>
-                    <div class="trade-item loss">
-                        <div class="trade-info">
-                            <h4>BANKNIFTY 44500 PE</h4>
-                            <p class="trade-time">Today, 09:45 AM</p>
-                        </div>
-                        <div class="trade-result">
-                            <p class="loss">-₹850</p>
-                            <span class="percentage">-1.7%</span>
-                        </div>
-                    </div>
-                    <div class="trade-item profit">
-                        <div class="trade-info">
-                            <h4>RELIANCE</h4>
-                            <p class="trade-time">Yesterday, 03:15 PM</p>
-                        </div>
-                        <div class="trade-result">
-                            <p class="profit">+₹2,100</p>
-                            <span class="percentage">+3.2%</span>
-                        </div>
-                    </div>
+            <div class="stats-grid">
+                <div class="stat-card profit">
+                    <h3>Total Profit/Loss</h3>
+                    <p class="value">₹25,420</p>
+                    <p class="change positive">+5.2% <span>vs last period</span></p>
+                </div>
+                <div class="stat-card trades">
+                    <h3>Total Trades</h3>
+                    <p class="value">48</p>
+                    <p class="change">+12 trades today</p>
+                </div>
+                <div class="stat-card win-rate">
+                    <h3>Win Rate</h3>
+                    <p class="value">68%</p>
+                    <p class="change positive">+2.3% <span>vs last period</span></p>
+                </div>
+                <div class="stat-card avg-return">
+                    <h3>Average Return</h3>
+                    <p class="value">₹530</p>
+                    <p class="change negative">-1.2% <span>vs last period</span></p>
                 </div>
             </div>
 
-            <div class="risk-metrics">
-                <h2>Risk Metrics</h2>
-                <div class="metrics-grid">
-                    <div class="metric-item">
-                        <h4>Sharpe Ratio</h4>
-                        <p>1.85</p>
+            <div class="dashboard-grid">
+                <div class="recent-trades">
+                    <h2>Recent Trades</h2>
+                    <div class="trades-list">
+                        <div class="trade-item profit">
+                            <div class="trade-info">
+                                <h4>NIFTY 19400 CE</h4>
+                                <p class="trade-time">Today, 10:30 AM</p>
+                            </div>
+                            <div class="trade-result">
+                                <p class="profit">+₹1,250</p>
+                                <span class="percentage">+2.5%</span>
+                            </div>
+                        </div>
+                        <div class="trade-item loss">
+                            <div class="trade-info">
+                                <h4>BANKNIFTY 44500 PE</h4>
+                                <p class="trade-time">Today, 09:45 AM</p>
+                            </div>
+                            <div class="trade-result">
+                                <p class="loss">-₹850</p>
+                                <span class="percentage">-1.7%</span>
+                            </div>
+                        </div>
+                        <div class="trade-item profit">
+                            <div class="trade-info">
+                                <h4>RELIANCE</h4>
+                                <p class="trade-time">Yesterday, 03:15 PM</p>
+                            </div>
+                            <div class="trade-result">
+                                <p class="profit">+₹2,100</p>
+                                <span class="percentage">+3.2%</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="metric-item">
-                        <h4>Max Drawdown</h4>
-                        <p>-12.3%</p>
+                </div>
+
+                <div class="risk-metrics">
+                    <h2>Risk Metrics</h2>
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <h4>Sharpe Ratio</h4>
+                            <p>1.85</p>
+                        </div>
+                        <div class="metric-item">
+                            <h4>Max Drawdown</h4>
+                            <p>-12.3%</p>
+                        </div>
+                        <div class="metric-item">
+                            <h4>Profit Factor</h4>
+                            <p>2.1</p>
+                        </div>
+                        <div class="metric-item">
+                            <h4>Risk/Reward</h4>
+                            <p>1:2.5</p>
+                        </div>
                     </div>
-                    <div class="metric-item">
-                        <h4>Profit Factor</h4>
-                        <p>2.1</p>
-                    </div>
-                    <div class="metric-item">
-                        <h4>Risk/Reward</h4>
-                        <p>1:2.5</p>
+                </div>
+
+                <div class="trading-journal">
+                    <h2>Trading Notes</h2>
+                    <div class="journal-entry">
+                        <textarea placeholder="Add your trading notes here..."></textarea>
+                        <button class="save-note-btn">Save Note</button>
                     </div>
                 </div>
             </div>
+        </main>
+    </div>
 
-            <div class="trading-journal">
-                <h2>Trading Notes</h2>
-                <div class="journal-entry">
-                    <textarea placeholder="Add your trading notes here..."></textarea>
-                    <button class="save-note-btn">Save Note</button>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <script src="script.js"></script>
+    <script>
+        // Show content after authentication check
+        document.addEventListener('DOMContentLoaded', function() {
+            if (checkAuth()) {
+                document.querySelector('.dashboard-content').classList.add('loaded');
+            }
+        });
+    </script>
 </body>
 </html> 
