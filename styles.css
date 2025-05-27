@@ -612,9 +612,15 @@ footer {
     border-right: 1px solid rgba(255, 215, 0, 0.1);
 }
 
+.dashboard-nav .logo {
+    display: flex;
+    justify-content: center;
+    padding: 0 1rem;
+    margin-bottom: 2rem;
+}
+
 .dashboard-nav .logo img {
     height: 100px;
-    margin-bottom: 2rem;
 }
 
 .dashboard-nav .nav-links {
@@ -902,9 +908,13 @@ footer {
         padding: 1rem 0.5rem;
     }
     
+    .dashboard-nav .logo {
+        padding: 0;
+        margin-bottom: 1rem;
+    }
+    
     .dashboard-nav .logo img {
         height: 50px;
-        margin-bottom: 1rem;
     }
     
     .dashboard-nav .nav-links a span,
