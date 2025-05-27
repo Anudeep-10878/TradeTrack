@@ -715,47 +715,16 @@ footer {
     padding: 2rem;
     border-radius: 12px;
     border: 2px solid var(--primary-color);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease;
     display: flex;
     gap: 1.5rem;
     align-items: center;
     position: relative;
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
-}
-
-.metric-card::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    border-radius: 12px;
-    background: linear-gradient(45deg, 
-        rgba(255, 215, 0, 0.5),
-        rgba(255, 215, 0, 0.2),
-        rgba(255, 215, 0, 0.5)
-    );
-    z-index: -1;
-    animation: borderGlow 2s ease-in-out infinite;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
 }
 
 .metric-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 5px 20px rgba(255, 215, 0, 0.3);
-}
-
-.metric-card:hover::before {
-    animation: borderGlow 1s ease-in-out infinite;
-}
-
-@keyframes borderGlow {
-    0%, 100% {
-        opacity: 0.5;
-    }
-    50% {
-        opacity: 1;
-    }
 }
 
 .metric-icon {
@@ -767,7 +736,11 @@ footer {
     align-items: center;
     justify-content: center;
     border: 1px solid rgba(255, 215, 0, 0.3);
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
+}
+
+.metric-icon i {
+    font-size: 24px;
+    color: var(--primary-color);
 }
 
 .metric-content {
@@ -807,35 +780,7 @@ footer {
     border: 2px solid var(--primary-color);
     height: 100%;
     position: relative;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.15);
-}
-
-.recent-trades::before,
-.risk-metrics::before,
-.performance-summary::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    border-radius: 12px;
-    background: linear-gradient(45deg, 
-        rgba(255, 215, 0, 0.3),
-        rgba(255, 215, 0, 0.1),
-        rgba(255, 215, 0, 0.3)
-    );
-    z-index: -1;
-    animation: sectionGlow 3s ease-in-out infinite;
-}
-
-@keyframes sectionGlow {
-    0%, 100% {
-        opacity: 0.3;
-    }
-    50% {
-        opacity: 0.6;
-    }
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.1);
 }
 
 .recent-trades h2,
