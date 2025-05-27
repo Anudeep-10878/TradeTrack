@@ -104,14 +104,14 @@ function handleCredentialResponse(response) {
         fetch(`${API_URL}/status`)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Server status check failed');
+                    throw new Error('Cannot connect to server. Please check your internet connection and try again.');
                 }
                 return response.json();
             })
             .then(status => {
                 console.log('Server status:', status);
-                if (status.mongodb === 'disconnected') {
-                    throw new Error('Database is currently unavailable. Please try again in a few minutes.');
+                if (!status || status.mongodb === 'disconnected') {
+                    throw new Error('Server is temporarily unavailable. Please try again in a few minutes.');
                 }
                 
                 // If connected, proceed with saving user
@@ -119,6 +119,9 @@ function handleCredentialResponse(response) {
                 return saveUserToDatabase(decoded);
             })
             .then(user => {
+                if (!user) {
+                    throw new Error('No user data received from server');
+                }
                 console.log('User saved successfully:', user);
                 localStorage.setItem('user', JSON.stringify(user));
                 console.log('User data saved to localStorage');
@@ -127,11 +130,11 @@ function handleCredentialResponse(response) {
             })
             .catch(error => {
                 console.error('Error in authentication flow:', error);
-                alert(error.message || 'Failed to save user data. Please try again.');
+                alert(error.message || 'Failed to connect to server. Please try again later.');
             });
     } catch (error) {
         console.error('Error in handleCredentialResponse:', error);
-        alert('An error occurred during sign in. Please try again.');
+        alert('An error occurred during sign in. Please check your internet connection and try again.');
     }
 }
 
@@ -140,6 +143,18 @@ const API_URL = 'https://tradetrack-58el.onrender.com';  // Render.com deployed 
 async function saveUserToDatabase(googleUser) {
     try {
         console.log('Making request to:', `${API_URL}/api/user`);
+        
+        // First try to check if the server is reachable
+        try {
+            const statusResponse = await fetch(`${API_URL}/status`);
+            const statusData = await statusResponse.json();
+            if (!statusData || statusData.mongodb === 'disconnected') {
+                throw new Error('Server is not ready. Please try again in a few moments.');
+            }
+        } catch (statusError) {
+            throw new Error('Cannot connect to server. Please check your internet connection and try again.');
+        }
+        
         const response = await fetch(`${API_URL}/api/user`, {
             method: 'POST',
             headers: {
@@ -154,13 +169,18 @@ async function saveUserToDatabase(googleUser) {
         
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            throw new Error(errorData.error || `Server error: ${response.status}`);
         }
         
-        return response.json();
+        const data = await response.json();
+        if (!data) {
+            throw new Error('No data received from server');
+        }
+        
+        return data;
     } catch (error) {
         console.error('Error in saveUserToDatabase:', error);
-        throw new Error(`Failed to save user: ${error.message}`);
+        throw new Error(`Server connection failed: ${error.message}. Please try again later.`);
     }
 }
 
