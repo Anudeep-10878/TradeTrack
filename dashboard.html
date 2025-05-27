@@ -42,7 +42,7 @@
 
         <main class="dashboard-main">
             <header class="dashboard-header">
-                <h1>Dashboard</h1>
+                <h1>Trading Dashboard</h1>
             </header>
 
             <div class="stats-grid">
@@ -68,70 +68,96 @@
                 </div>
             </div>
 
-            <div class="dashboard-grid">
-                <div class="recent-trades">
-                    <h2>Recent Trades</h2>
-                    <div class="trades-list">
-                        <div class="trade-item profit">
-                            <div class="trade-info">
-                                <h4>NIFTY 19400 CE</h4>
-                                <p class="trade-time">Today, 10:30 AM</p>
+            <div class="main-content-grid">
+                <div class="content-left">
+                    <div class="recent-trades">
+                        <h2>Recent Trades</h2>
+                        <div class="trades-list">
+                            <div class="trade-item profit">
+                                <div class="trade-info">
+                                    <h4>NIFTY 19400 CE</h4>
+                                    <p class="trade-time">Today, 10:30 AM</p>
+                                </div>
+                                <div class="trade-result">
+                                    <p class="profit">+₹1,250</p>
+                                    <span class="percentage">+2.5%</span>
+                                </div>
                             </div>
-                            <div class="trade-result">
-                                <p class="profit">+₹1,250</p>
-                                <span class="percentage">+2.5%</span>
+                            <div class="trade-item loss">
+                                <div class="trade-info">
+                                    <h4>BANKNIFTY 44500 PE</h4>
+                                    <p class="trade-time">Today, 09:45 AM</p>
+                                </div>
+                                <div class="trade-result">
+                                    <p class="loss">-₹850</p>
+                                    <span class="percentage">-1.7%</span>
+                                </div>
+                            </div>
+                            <div class="trade-item profit">
+                                <div class="trade-info">
+                                    <h4>RELIANCE</h4>
+                                    <p class="trade-time">Yesterday, 03:15 PM</p>
+                                </div>
+                                <div class="trade-result">
+                                    <p class="profit">+₹2,100</p>
+                                    <span class="percentage">+3.2%</span>
+                                </div>
                             </div>
                         </div>
-                        <div class="trade-item loss">
-                            <div class="trade-info">
-                                <h4>BANKNIFTY 44500 PE</h4>
-                                <p class="trade-time">Today, 09:45 AM</p>
-                            </div>
-                            <div class="trade-result">
-                                <p class="loss">-₹850</p>
-                                <span class="percentage">-1.7%</span>
-                            </div>
-                        </div>
-                        <div class="trade-item profit">
-                            <div class="trade-info">
-                                <h4>RELIANCE</h4>
-                                <p class="trade-time">Yesterday, 03:15 PM</p>
-                            </div>
-                            <div class="trade-result">
-                                <p class="profit">+₹2,100</p>
-                                <span class="percentage">+3.2%</span>
-                            </div>
+                    </div>
+
+                    <div class="trading-journal">
+                        <h2>Trading Notes</h2>
+                        <div class="journal-entry">
+                            <textarea placeholder="Add your trading notes here..."></textarea>
+                            <button class="save-note-btn">Save Note</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="risk-metrics">
-                    <h2>Risk Metrics</h2>
-                    <div class="metrics-grid">
-                        <div class="metric-item">
-                            <h4>Sharpe Ratio</h4>
-                            <p>1.85</p>
-                        </div>
-                        <div class="metric-item">
-                            <h4>Max Drawdown</h4>
-                            <p>-12.3%</p>
-                        </div>
-                        <div class="metric-item">
-                            <h4>Profit Factor</h4>
-                            <p>2.1</p>
-                        </div>
-                        <div class="metric-item">
-                            <h4>Risk/Reward</h4>
-                            <p>1:2.5</p>
+                <div class="content-right">
+                    <div class="risk-metrics">
+                        <h2>Risk Metrics</h2>
+                        <div class="metrics-grid">
+                            <div class="metric-item">
+                                <h4>Sharpe Ratio</h4>
+                                <p>1.85</p>
+                            </div>
+                            <div class="metric-item">
+                                <h4>Max Drawdown</h4>
+                                <p>-12.3%</p>
+                            </div>
+                            <div class="metric-item">
+                                <h4>Profit Factor</h4>
+                                <p>2.1</p>
+                            </div>
+                            <div class="metric-item">
+                                <h4>Risk/Reward</h4>
+                                <p>1:2.5</p>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="trading-journal">
-                    <h2>Trading Notes</h2>
-                    <div class="journal-entry">
-                        <textarea placeholder="Add your trading notes here..."></textarea>
-                        <button class="save-note-btn">Save Note</button>
+                    <div class="performance-summary">
+                        <h2>Performance Summary</h2>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <h4>Monthly P&L</h4>
+                                <p class="positive">+₹42,650</p>
+                            </div>
+                            <div class="summary-item">
+                                <h4>Best Trade</h4>
+                                <p>₹5,200</p>
+                            </div>
+                            <div class="summary-item">
+                                <h4>Win Streak</h4>
+                                <p>6 trades</p>
+                            </div>
+                            <div class="summary-item">
+                                <h4>Avg Hold Time</h4>
+                                <p>45 mins</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
