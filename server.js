@@ -47,15 +47,8 @@ let db;
 // MongoDB connection string parsing and configuration
 const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/tradetrack";
 
-// Ensure TLS is enabled in connection string
-const uriObject = new URL(uri);
-if (!uriObject.searchParams.has('tls')) {
-    uriObject.searchParams.append('tls', 'true');
-}
-const finalUri = uriObject.toString();
-
 // Log connection string format (without credentials)
-const sanitizedUri = finalUri.replace(/\/\/[^@]+@/, '//****:****@');
+const sanitizedUri = uri.replace(/\/\/[^@]+@/, '//****:****@');
 console.log('MongoDB Connection String Format:', sanitizedUri);
 
 const options = {
@@ -64,20 +57,16 @@ const options = {
     maxPoolSize: 50,
     wtimeoutMS: 2500,
     connectTimeoutMS: 10000,
-    ssl: true,
-    tls: true,
-    tlsAllowInvalidCertificates: true,
-    tlsAllowInvalidHostnames: true,
     retryWrites: true
 };
 
 // Connect to MongoDB with retry logic
 async function connectToMongo() {
     try {
-        console.log("Attempting to connect to MongoDB with TLS enabled...");
+        console.log("Attempting to connect to MongoDB...");
         console.log("Connection options:", JSON.stringify(options, null, 2));
         
-        const client = await MongoClient.connect(finalUri, options);
+        const client = await MongoClient.connect(uri, options);
         console.log("Connected to client!");
         
         db = client.db();
