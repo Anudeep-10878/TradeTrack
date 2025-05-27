@@ -26,6 +26,14 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.static('public'));
 
+// Health check endpoint
+app.get('/', (req, res) => {
+    res.json({ status: 'ok', message: 'Server is running' });
+});
+
+// MongoDB connection status
+let isConnected = false;
+
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(process.env.MONGODB_URI, {
     serverApi: {
@@ -40,6 +48,7 @@ let db;
 // Connect to MongoDB with retry logic
 async function connectToMongo() {
     try {
+        console.log("Attempting to connect to MongoDB...");
         await client.connect();
         db = client.db("tradetrack"); // specify your database name
         console.log("Connected to MongoDB!");
@@ -47,8 +56,10 @@ async function connectToMongo() {
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        isConnected = true;
     } catch (err) {
         console.error("Error connecting to MongoDB:", err);
+        isConnected = false;
         console.log("Retrying in 5 seconds...");
         setTimeout(connectToMongo, 5000);
     }
@@ -56,32 +67,59 @@ async function connectToMongo() {
 
 connectToMongo();
 
+// MongoDB connection status endpoint
+app.get('/status', (req, res) => {
+    res.json({
+        server: 'running',
+        mongodb: isConnected ? 'connected' : 'disconnected',
+        mongodbUri: process.env.MONGODB_URI ? 'configured' : 'missing'
+    });
+});
+
 // User Schema and Model (using native MongoDB driver)
 async function createUser(userData) {
-    return await db.collection('users').findOneAndUpdate(
-        { email: userData.email },
-        { $setOnInsert: { 
-            ...userData,
-            trades: [],
-            metrics: {
-                total_trades: 0,
-                winning_trades: 0,
-                total_profit_loss: 0,
-                win_rate: 0,
-                average_return: 0
-            }
-        }},
-        { upsert: true, returnDocument: 'after' }
-    );
+    if (!isConnected) {
+        throw new Error('Database not connected');
+    }
+    
+    try {
+        const result = await db.collection('users').findOneAndUpdate(
+            { email: userData.email },
+            { $setOnInsert: { 
+                ...userData,
+                trades: [],
+                metrics: {
+                    total_trades: 0,
+                    winning_trades: 0,
+                    total_profit_loss: 0,
+                    win_rate: 0,
+                    average_return: 0
+                }
+            }},
+            { upsert: true, returnDocument: 'after' }
+        );
+        return result;
+    } catch (error) {
+        console.error('Error creating user:', error);
+        throw error;
+    }
 }
 
 // Routes
 app.post('/api/user', async (req, res) => {
     try {
+        console.log('Received user creation request:', req.body);
         const { email, name, picture } = req.body;
+        
+        if (!email || !name) {
+            return res.status(400).json({ error: 'Email and name are required' });
+        }
+        
         const result = await createUser({ email, name, picture });
+        console.log('User created/updated successfully');
         res.json(result.value);
     } catch (error) {
+        console.error('Error in POST /api/user:', error);
         res.status(500).json({ error: error.message });
     }
 });
