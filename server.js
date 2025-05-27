@@ -50,13 +50,26 @@ const client = new MongoClient(process.env.MONGODB_URI || 'mongodb://localhost:2
         version: ServerApiVersion.v1,
         strict: true,
         deprecationErrors: true,
-    }
+    },
+    ssl: true,
+    tls: true,
+    tlsAllowInvalidCertificates: false,
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    retryWrites: true,
+    maxPoolSize: 10,
+    minPoolSize: 5,
+    maxIdleTimeMS: 60000,
+    connectTimeoutMS: 30000,
+    socketTimeoutMS: 45000
 });
 
 // Connect to MongoDB with retry logic
 async function connectToMongo() {
     try {
         console.log("Attempting to connect to MongoDB...");
+        console.log("MongoDB URI configured:", process.env.MONGODB_URI ? "Yes" : "No");
+        
         await client.connect();
         db = client.db("tradetrack");
         console.log("Connected to MongoDB!");
@@ -68,6 +81,11 @@ async function connectToMongo() {
         return true;
     } catch (err) {
         console.error("Error connecting to MongoDB:", err);
+        console.error("Error details:", {
+            name: err.name,
+            message: err.message,
+            stack: err.stack
+        });
         isConnected = false;
         return false;
     }
