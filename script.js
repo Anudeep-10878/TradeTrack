@@ -52,24 +52,24 @@ window.addEventListener('click', (e) => {
     }
 });
 
-// Google Sign-In callback function
-function handleCredentialResponse(response) {
-    // Decode the credential response
-    const responsePayload = decodeJwtResponse(response.credential);
-    
-    // Store user info in localStorage
-    localStorage.setItem('user', JSON.stringify({
-        name: responsePayload.name,
-        email: responsePayload.email,
-        picture: responsePayload.picture
-    }));
-
-    // Close modal
-    modal.classList.remove('show');
-    document.body.style.overflow = '';
-
-    // Redirect to dashboard
-    window.location.href = 'dashboard.html';
+// Function to update user profile in dashboard
+function updateUserProfile() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user) {
+        const username = document.querySelector('.username');
+        const profilePic = document.querySelector('.profile-pic');
+        
+        if (username && profilePic) {
+            // Update username - use given name if available, otherwise full name
+            username.textContent = user.given_name || user.name;
+            
+            // Update profile picture
+            if (user.picture) {
+                profilePic.src = user.picture;
+                profilePic.alt = user.name;
+            }
+        }
+    }
 }
 
 // Function to decode JWT token
@@ -82,6 +82,30 @@ function decodeJwtResponse(token) {
     return JSON.parse(jsonPayload);
 }
 
+// Google Sign-In callback function
+function handleCredentialResponse(response) {
+    // Decode the credential response
+    const responsePayload = decodeJwtResponse(response.credential);
+    
+    // Store user info in localStorage with all available details
+    localStorage.setItem('user', JSON.stringify({
+        name: responsePayload.name,
+        given_name: responsePayload.given_name,
+        email: responsePayload.email,
+        picture: responsePayload.picture
+    }));
+
+    // Close modal
+    const modal = document.getElementById('loginModal');
+    if (modal) {
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    // Redirect to dashboard
+    window.location.href = 'dashboard.html';
+}
+
 // Check authentication status on dashboard page
 if (window.location.pathname.includes('dashboard.html')) {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -90,10 +114,7 @@ if (window.location.pathname.includes('dashboard.html')) {
         window.location.href = 'index.html';
     } else {
         // Update dashboard UI with user info
-        const username = document.querySelector('.username');
-        const profilePic = document.querySelector('.profile-pic');
-        if (username) username.textContent = user.name;
-        if (profilePic) profilePic.src = user.picture;
+        updateUserProfile();
     }
 }
 
