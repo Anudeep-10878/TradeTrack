@@ -2,6 +2,7 @@ const express = require('express');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const mongoose = require('mongoose');
 
 dotenv.config();
 
@@ -237,48 +238,98 @@ app.get('/api/user/:email', checkDbConnection, async (req, res) => {
     }
 });
 
-app.post('/api/trade/:email', checkDbConnection, async (req, res) => {
-    try {
-        const trade = req.body;
-        const result = await db.collection('users').findOneAndUpdate(
-            { email: req.params.email },
-            { 
-                $push: { trades: trade },
-                $inc: {
-                    'metrics.total_trades': 1,
-                    'metrics.winning_trades': trade.profit_loss > 0 ? 1 : 0,
-                    'metrics.total_profit_loss': trade.profit_loss
-                }
-            },
-            { returnDocument: 'after' }
-        );
+// Function to calculate trade metrics
+function calculateTradeMetrics(trades) {
+    const metrics = {
+        total_profit_loss: 0,
+        total_trades: trades.length,
+        win_rate: 0,
+        average_return: 0,
+        best_trade: 0,
+        worst_trade: 0,
+        win_streak: 0,
+        current_win_streak: 0
+    };
 
-        if (!result.value) {
+    let winning_trades = 0;
+    let total_return_percentage = 0;
+
+    trades.forEach(trade => {
+        // Calculate profit/loss for this trade
+        const quantity = trade.quantity || 1;
+        const profit_loss = (trade.exitPrice - trade.entryPrice) * quantity;
+        trade.profit_loss = profit_loss;
+
+        // Update total P&L
+        metrics.total_profit_loss += profit_loss;
+
+        // Calculate return percentage
+        const return_percentage = ((trade.exitPrice - trade.entryPrice) / trade.entryPrice) * 100;
+        total_return_percentage += return_percentage;
+
+        // Update best and worst trades
+        metrics.best_trade = Math.max(metrics.best_trade, profit_loss);
+        metrics.worst_trade = Math.min(metrics.worst_trade, profit_loss);
+
+        // Count winning trades and update win streak
+        if (profit_loss > 0) {
+            winning_trades++;
+            metrics.current_win_streak++;
+            metrics.win_streak = Math.max(metrics.win_streak, metrics.current_win_streak);
+        } else {
+            metrics.current_win_streak = 0;
+        }
+    });
+
+    // Calculate win rate and average return
+    metrics.win_rate = (trades.length > 0) ? (winning_trades / trades.length) * 100 : 0;
+    metrics.average_return = (trades.length > 0) ? total_return_percentage / trades.length : 0;
+
+    return metrics;
+}
+
+// Update the /api/trade/:email POST route
+app.post('/api/trade/:email', async (req, res) => {
+    try {
+        const { email } = req.params;
+        const tradeData = req.body;
+
+        // Calculate profit/loss for this trade
+        const quantity = tradeData.quantity || 1;
+        const profit_loss = (tradeData.exitPrice - tradeData.entryPrice) * quantity;
+        tradeData.profit_loss = profit_loss;
+
+        // Find the user
+        const user = await db.collection('users').findOne({ email });
+        if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Update win rate and average return
-        const user = result.value;
-        const winRate = (user.metrics.winning_trades / user.metrics.total_trades) * 100;
-        const avgReturn = user.metrics.total_profit_loss / user.metrics.total_trades;
+        // Add the new trade
+        if (!user.trades) {
+            user.trades = [];
+        }
+        user.trades.push(tradeData);
 
+        // Calculate updated metrics
+        const metrics = calculateTradeMetrics(user.trades);
+        user.metrics = metrics;
+
+        // Save the updated user document
         await db.collection('users').updateOne(
             { email: req.params.email },
-            { 
-                $set: {
-                    'metrics.win_rate': winRate,
-                    'metrics.average_return': avgReturn
-                }
-            }
+            { $set: { trades: user.trades, metrics: user.metrics } }
         );
 
-        user.metrics.win_rate = winRate;
-        user.metrics.average_return = avgReturn;
-
-        res.json(user);
+        // Return the updated user data
+        res.json({
+            message: 'Trade added successfully',
+            trades: user.trades,
+            metrics: user.metrics
+        });
     } catch (error) {
-        console.error('Error in POST /api/trade/:email:', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error adding trade:', error);
+        res.status(500).json({ error: 'Failed to add trade' });
     }
 });
 

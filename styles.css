@@ -972,17 +972,34 @@ footer {
     padding: 1rem;
     background-color: rgba(0, 0, 0, 0.3);
     border-radius: 8px;
-    border: 1px solid rgba(255, 215, 0, 0.05);
+    margin-bottom: 0.8rem;
+    border: 1px solid rgba(255, 215, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.trade-item:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 215, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.1);
+}
+
+.trade-item.profit {
+    border-left: 3px solid #4CAF50;
+}
+
+.trade-item.loss {
+    border-left: 3px solid #f44336;
 }
 
 .trade-info h4 {
     color: var(--text-color);
+    font-size: 0.9rem;
     margin-bottom: 0.2rem;
 }
 
 .trade-time {
     color: rgba(255, 255, 255, 0.5);
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
 .trade-result {
@@ -991,15 +1008,21 @@ footer {
 
 .trade-result .profit {
     color: #4CAF50;
+    font-weight: 600;
+    font-size: 0.9rem;
 }
 
 .trade-result .loss {
     color: #f44336;
+    font-weight: 600;
+    font-size: 0.9rem;
 }
 
 .trade-result .percentage {
-    font-size: 0.9rem;
+    display: block;
+    font-size: 0.8rem;
     color: rgba(255, 255, 255, 0.5);
+    margin-top: 0.2rem;
 }
 
 .risk-metrics h2 {
@@ -1929,4 +1952,36 @@ footer {
         width: 100%;
         padding: 0.8rem;
     }
+}
+
+/* Notification Styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 500;
+    z-index: 10000;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.3s ease;
+}
+
+.notification.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.notification.success {
+    background-color: #4CAF50;
+    border: 1px solid #43A047;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+}
+
+.notification.error {
+    background-color: #f44336;
+    border: 1px solid #e53935;
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.2);
 } 

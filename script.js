@@ -281,7 +281,7 @@ function checkAuth() {
                 .then(updatedUser => {
                     if (updatedUser) {
                         localStorage.setItem('user', JSON.stringify(updatedUser));
-                        updateDashboardMetrics(updatedUser);
+                        updateDashboardMetrics(updatedUser.metrics);
                         if (updatedUser.trades) {
                             updateRecentTrades(updatedUser.trades);
                         }
@@ -304,51 +304,90 @@ function checkAuth() {
     }
 }
 
-function updateDashboardMetrics(user) {
+// Function to update dashboard metrics
+function updateDashboardMetrics(metrics) {
     // Update total profit/loss
-    document.querySelector('.profit .value').textContent = 
-        `₹${user.metrics.total_profit_loss.toFixed(2)}`;
+    const profitLossElement = document.querySelector('.profit .value');
+    const profitLossChange = document.querySelector('.profit .change');
+    profitLossElement.textContent = `₹${metrics.total_profit_loss.toFixed(2)}`;
+    profitLossChange.textContent = `${metrics.total_trades} trades`;
     
     // Update total trades
-    document.querySelector('.trades .value').textContent = 
-        user.metrics.total_trades.toString();
+    const tradesElement = document.querySelector('.trades .value');
+    const tradesChange = document.querySelector('.trades .change');
+    tradesElement.textContent = metrics.total_trades.toString();
+    tradesChange.textContent = metrics.current_win_streak > 0 ? 
+        `${metrics.current_win_streak} trade win streak` : 'No current streak';
     
     // Update win rate
-    document.querySelector('.win-rate .value').textContent = 
-        `${user.metrics.win_rate.toFixed(1)}%`;
+    const winRateElement = document.querySelector('.win-rate .value');
+    const winRateChange = document.querySelector('.win-rate .change');
+    winRateElement.textContent = `${metrics.win_rate.toFixed(1)}%`;
+    winRateChange.textContent = `Best: ${metrics.win_streak} trades`;
     
     // Update average return
-    document.querySelector('.avg-return .value').textContent = 
-        `₹${user.metrics.average_return.toFixed(2)}`;
+    const avgReturnElement = document.querySelector('.avg-return .value');
+    const avgReturnChange = document.querySelector('.avg-return .change');
+    avgReturnElement.textContent = `₹${metrics.average_return.toFixed(2)}`;
+    avgReturnChange.textContent = `Best: ₹${metrics.best_trade.toFixed(2)}`;
+
+    // Update performance summary
+    updatePerformanceSummary(metrics);
 }
 
+// Function to update performance summary
+function updatePerformanceSummary(metrics) {
+    const summaryItems = {
+        'Monthly P&L': `₹${metrics.total_profit_loss.toFixed(2)}`,
+        'Best Trade': `₹${metrics.best_trade.toFixed(2)}`,
+        'Win Streak': `${metrics.win_streak} trades`,
+        'Avg Hold Time': 'Calculating...'
+    };
+
+    const summaryGrid = document.querySelector('.summary-grid');
+    if (summaryGrid) {
+        summaryGrid.innerHTML = Object.entries(summaryItems).map(([label, value]) => `
+            <div class="summary-item">
+                <h4>${label}</h4>
+                <p>${value}</p>
+            </div>
+        `).join('');
+    }
+}
+
+// Function to update recent trades list
 function updateRecentTrades(trades) {
     const tradesList = document.querySelector('.trades-list');
-    tradesList.innerHTML = '';
-    
-    const recentTrades = trades.slice(-3).reverse();
-    
-    recentTrades.forEach(trade => {
-        const tradeItem = document.createElement('div');
-        tradeItem.className = `trade-item ${trade.profit_loss > 0 ? 'profit' : 'loss'}`;
-        
-        tradeItem.innerHTML = `
-            <div class="trade-info">
-                <h4>${trade.symbol}</h4>
-                <p class="trade-time">${new Date(trade.date).toLocaleString()}</p>
-            </div>
-            <div class="trade-result">
-                <p class="${trade.profit_loss > 0 ? 'profit' : 'loss'}">
-                    ${trade.profit_loss > 0 ? '+' : ''}₹${trade.profit_loss.toFixed(2)}
-                </p>
-                <span class="percentage">
-                    ${((trade.exit - trade.entry) / trade.entry * 100).toFixed(1)}%
-                </span>
+    if (!tradesList) return;
+
+    if (!trades || trades.length === 0) {
+        tradesList.innerHTML = `
+            <div class="no-trades-message">
+                <p>No trades recorded yet. Click "Add Trade" to get started.</p>
             </div>
         `;
-        
-        tradesList.appendChild(tradeItem);
-    });
+        return;
+    }
+
+    // Get the most recent 5 trades
+    const recentTrades = trades.slice(-5).reverse();
+    
+    tradesList.innerHTML = recentTrades.map(trade => `
+        <div class="trade-item ${trade.profit_loss >= 0 ? 'profit' : 'loss'}">
+            <div class="trade-info">
+                <h4>${trade.positionName}</h4>
+                <p class="trade-time">${new Date(trade.date).toLocaleDateString()}</p>
+            </div>
+            <div class="trade-result">
+                <p class="${trade.profit_loss >= 0 ? 'profit' : 'loss'}">
+                    ${trade.profit_loss >= 0 ? '+' : ''}₹${trade.profit_loss.toFixed(2)}
+                </p>
+                <span class="percentage">
+                    ${((trade.exitPrice - trade.entryPrice) / trade.entryPrice * 100).toFixed(1)}%
+                </span>
+            </div>
+        </div>
+    `).join('');
 }
 
 function handleLogout() {
@@ -839,23 +878,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error('User not authenticated');
             }
 
+            // Show loading state
+            const submitBtn = nakedPositionForm.querySelector('.submit-trade-btn');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Adding...';
+            submitBtn.disabled = true;
+
             const response = await saveTrade(user.email, tradeData);
             console.log('Trade saved successfully:', response);
             
-            // Update the dashboard
-            const updatedUser = await getUserData(user.email);
-            if (updatedUser) {
-                localStorage.setItem('user', JSON.stringify(updatedUser));
-                updateDashboardMetrics(updatedUser);
-                updateRecentTrades(updatedUser.trades);
+            // Update the dashboard with new data
+            if (response.metrics) {
+                updateDashboardMetrics(response.metrics);
+            }
+            if (response.trades) {
+                updateRecentTrades(response.trades);
             }
 
+            // Update local storage
+            user.trades = response.trades;
+            user.metrics = response.metrics;
+            localStorage.setItem('user', JSON.stringify(user));
+
+            // Hide modal and show success message
             hideNakedPositionModal();
-            // Show success message
-            alert('Position added successfully!');
+            showNotification('Position added successfully!', 'success');
+
         } catch (error) {
             console.error('Error saving position:', error);
-            alert('Failed to save position. Please try again.');
+            showNotification('Failed to save position. Please try again.', 'error');
+        } finally {
+            // Reset button state
+            const submitBtn = nakedPositionForm.querySelector('.submit-trade-btn');
+            submitBtn.textContent = 'Add Position';
+            submitBtn.disabled = false;
         }
     });
 });
@@ -955,4 +1011,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const style = document.createElement('style');
     style.textContent = tradeModalStyles;
     document.head.appendChild(style);
-}); 
+});
+
+// Function to show notifications
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Trigger animation
+    setTimeout(() => notification.classList.add('show'), 100);
+    
+    // Remove notification after 3 seconds
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+} 
