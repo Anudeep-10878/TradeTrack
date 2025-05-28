@@ -440,8 +440,16 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const user = JSON.parse(localStorage.getItem('user'));
             if (user) {
-                // Populate user data
-                document.getElementById('profilePreview').src = user.picture || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+                // Set default profile picture if user picture is not available
+                const defaultProfilePic = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+                
+                // Update profile preview with user's picture or default
+                if (profilePreview) {
+                    profilePreview.src = user.picture || defaultProfilePic;
+                    profilePreview.alt = user.name || 'Profile Picture';
+                }
+
+                // Update other settings fields
                 document.getElementById('settingsName').value = user.name || '';
                 document.getElementById('settingsEmail').value = user.email || '';
                 

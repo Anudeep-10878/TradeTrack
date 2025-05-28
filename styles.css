@@ -1281,6 +1281,7 @@ footer {
 .profile-section {
     text-align: center;
     margin-bottom: 2rem;
+    padding: 1rem;
 }
 
 .profile-display {
@@ -1299,10 +1300,11 @@ footer {
     height: 100%;
     object-fit: cover;
     border-radius: 50%;
-    border: 2px solid var(--primary-color);
 }
 
 /* Settings form */
 .settings-form {
     padding: 1rem;
+    max-width: 500px;
+    margin: 0 auto;
 } 
