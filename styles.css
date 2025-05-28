@@ -991,6 +991,7 @@ footer {
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.2) !important;
     transform: translateY(-20px);
     transition: transform 0.3s ease;
+    padding: 2rem;
 }
 
 .show .settings-modal {
@@ -1282,6 +1283,8 @@ footer {
     text-align: center;
     margin-bottom: 2rem;
     padding: 1rem;
+    display: flex;
+    justify-content: center;
 }
 
 .profile-display {
@@ -1293,6 +1296,9 @@ footer {
     overflow: hidden;
     border: 3px solid var(--primary-color);
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .profile-pic-large {
@@ -1300,6 +1306,7 @@ footer {
     height: 100%;
     object-fit: cover;
     border-radius: 50%;
+    display: block;
 }
 
 /* Settings form */
