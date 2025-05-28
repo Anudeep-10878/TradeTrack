@@ -414,93 +414,106 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Settings Modal Functionality
-const settingsModal = document.getElementById('settingsModal');
-const settingsLink = document.querySelector('a[href="#"][i.className*="fa-cog"]');
-const closeSettingsModal = settingsModal.querySelector('.close-modal');
-const saveSettingsBtn = settingsModal.querySelector('.save-settings-btn');
+document.addEventListener('DOMContentLoaded', () => {
+    const settingsModal = document.getElementById('settingsModal');
+    const settingsLink = document.querySelector('.nav-links a[href="#"]:has(i.fa-cog)');
+    const closeSettingsModal = settingsModal.querySelector('.close-modal');
+    const saveSettingsBtn = settingsModal.querySelector('.save-settings-btn');
 
-// Open settings modal with corrected display style
-settingsLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (user) {
-        // Populate user data
-        document.getElementById('profilePreview').src = user.picture || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
-        document.getElementById('settingsName').value = user.name || '';
-        document.getElementById('settingsEmail').value = user.email || '';
-        
-        // Fetch additional user settings from server
-        fetch(`${API_URL}/api/user/${user.email}`)
-            .then(response => response.json())
-            .then(userData => {
-                document.getElementById('tradingCapital').value = userData.tradingCapital || '';
-                document.getElementById('tradingExperience').value = userData.tradingExperience || '';
-            })
-            .catch(error => console.error('Error fetching user settings:', error));
-    }
-    settingsModal.style.display = 'flex'; // Changed to flex
-    settingsModal.classList.add('show'); // Add show class for animation
-});
-
-// Close settings modal with animation
-closeSettingsModal.addEventListener('click', () => {
-    settingsModal.classList.remove('show');
-    setTimeout(() => {
-        settingsModal.style.display = 'none';
-    }, 300); // Match this with the CSS transition duration
-});
-
-// Close modal when clicking outside
-window.addEventListener('click', (e) => {
-    if (e.target === settingsModal) {
-        settingsModal.classList.remove('show');
-        setTimeout(() => {
-            settingsModal.style.display = 'none';
-        }, 300); // Match this with the CSS transition duration
-    }
-});
-
-// Save settings
-saveSettingsBtn.addEventListener('click', async () => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (!user) {
-        alert('Please log in to save settings');
-        return;
-    }
-
-    const tradingCapital = document.getElementById('tradingCapital').value;
-    const tradingExperience = document.getElementById('tradingExperience').value;
-
-    try {
-        const response = await fetch(`${API_URL}/api/user/${user.email}/settings`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                tradingCapital: tradingCapital ? Number(tradingCapital) : null,
-                tradingExperience: tradingExperience || null
-            })
+    // Open settings modal with corrected display style
+    if (settingsLink) {
+        settingsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user) {
+                // Populate user data
+                document.getElementById('profilePreview').src = user.picture || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+                document.getElementById('settingsName').value = user.name || '';
+                document.getElementById('settingsEmail').value = user.email || '';
+                
+                // Fetch additional user settings from server
+                fetch(`${API_URL}/api/user/${user.email}`)
+                    .then(response => response.json())
+                    .then(userData => {
+                        document.getElementById('tradingCapital').value = userData.tradingCapital || '';
+                        document.getElementById('tradingExperience').value = userData.tradingExperience || '';
+                    })
+                    .catch(error => console.error('Error fetching user settings:', error));
+            }
+            settingsModal.style.display = 'flex';
+            settingsModal.classList.add('show');
         });
+    } else {
+        console.error('Settings link not found');
+    }
 
-        if (!response.ok) {
-            throw new Error('Failed to save settings');
+    // Close settings modal with animation
+    if (closeSettingsModal) {
+        closeSettingsModal.addEventListener('click', () => {
+            settingsModal.classList.remove('show');
+            setTimeout(() => {
+                settingsModal.style.display = 'none';
+            }, 300);
+        });
+    }
+
+    // Close modal when clicking outside
+    window.addEventListener('click', (e) => {
+        if (e.target === settingsModal) {
+            settingsModal.classList.remove('show');
+            setTimeout(() => {
+                settingsModal.style.display = 'none';
+            }, 300);
         }
+    });
 
-        const updatedUser = await response.json();
-        
-        // Update local storage with new settings
-        const currentUser = JSON.parse(localStorage.getItem('user'));
-        localStorage.setItem('user', JSON.stringify({
-            ...currentUser,
-            tradingCapital: updatedUser.tradingCapital,
-            tradingExperience: updatedUser.tradingExperience
-        }));
+    // Save settings
+    if (saveSettingsBtn) {
+        saveSettingsBtn.addEventListener('click', async () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) {
+                alert('Please log in to save settings');
+                return;
+            }
 
-        alert('Settings saved successfully!');
-        settingsModal.style.display = 'none';
-    } catch (error) {
-        console.error('Error saving settings:', error);
-        alert('Failed to save settings. Please try again.');
+            const tradingCapital = document.getElementById('tradingCapital').value;
+            const tradingExperience = document.getElementById('tradingExperience').value;
+
+            try {
+                const response = await fetch(`${API_URL}/api/user/${user.email}/settings`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        tradingCapital: tradingCapital ? Number(tradingCapital) : null,
+                        tradingExperience: tradingExperience || null
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to save settings');
+                }
+
+                const updatedUser = await response.json();
+                
+                // Update local storage with new settings
+                const currentUser = JSON.parse(localStorage.getItem('user'));
+                localStorage.setItem('user', JSON.stringify({
+                    ...currentUser,
+                    tradingCapital: updatedUser.tradingCapital,
+                    tradingExperience: updatedUser.tradingExperience
+                }));
+
+                alert('Settings saved successfully!');
+                settingsModal.classList.remove('show');
+                setTimeout(() => {
+                    settingsModal.style.display = 'none';
+                }, 300);
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                alert('Failed to save settings. Please try again.');
+            }
+        });
     }
 }); 
