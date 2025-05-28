@@ -306,52 +306,80 @@ function checkAuth() {
 
 // Function to update dashboard metrics
 function updateDashboardMetrics(metrics) {
-    // Update total profit/loss
-    const profitLossElement = document.querySelector('.profit .value');
-    const profitLossChange = document.querySelector('.profit .change');
-    profitLossElement.textContent = `₹${metrics.total_profit_loss.toFixed(2)}`;
-    profitLossChange.textContent = `${metrics.total_trades} trades`;
-    
-    // Update total trades
-    const tradesElement = document.querySelector('.trades .value');
-    const tradesChange = document.querySelector('.trades .change');
-    tradesElement.textContent = metrics.total_trades.toString();
-    tradesChange.textContent = metrics.current_win_streak > 0 ? 
-        `${metrics.current_win_streak} trade win streak` : 'No current streak';
-    
-    // Update win rate
-    const winRateElement = document.querySelector('.win-rate .value');
-    const winRateChange = document.querySelector('.win-rate .change');
-    winRateElement.textContent = `${metrics.win_rate.toFixed(1)}%`;
-    winRateChange.textContent = `Best: ${metrics.win_streak} trades`;
-    
-    // Update average return
-    const avgReturnElement = document.querySelector('.avg-return .value');
-    const avgReturnChange = document.querySelector('.avg-return .change');
-    avgReturnElement.textContent = `₹${metrics.average_return.toFixed(2)}`;
-    avgReturnChange.textContent = `Best: ₹${metrics.best_trade.toFixed(2)}`;
+    if (!metrics) {
+        console.warn('No metrics provided to updateDashboardMetrics');
+        return;
+    }
 
-    // Update performance summary
-    updatePerformanceSummary(metrics);
+    try {
+        // Update total profit/loss
+        const profitLossElement = document.querySelector('.profit .value');
+        const profitLossChange = document.querySelector('.profit .change');
+        if (profitLossElement && profitLossChange) {
+            const totalPL = Number(metrics.total_profit_loss) || 0;
+            profitLossElement.textContent = `₹${totalPL.toFixed(2)}`;
+            profitLossChange.textContent = `${metrics.total_trades || 0} trades`;
+        }
+        
+        // Update total trades
+        const tradesElement = document.querySelector('.trades .value');
+        const tradesChange = document.querySelector('.trades .change');
+        if (tradesElement && tradesChange) {
+            tradesElement.textContent = (metrics.total_trades || 0).toString();
+            const winStreak = metrics.current_win_streak || 0;
+            tradesChange.textContent = winStreak > 0 ? 
+                `${winStreak} trade win streak` : 'No current streak';
+        }
+        
+        // Update win rate
+        const winRateElement = document.querySelector('.win-rate .value');
+        const winRateChange = document.querySelector('.win-rate .change');
+        if (winRateElement && winRateChange) {
+            const winRate = Number(metrics.win_rate) || 0;
+            winRateElement.textContent = `${winRate.toFixed(1)}%`;
+            winRateChange.textContent = `Best: ${metrics.win_streak || 0} trades`;
+        }
+        
+        // Update average return
+        const avgReturnElement = document.querySelector('.avg-return .value');
+        const avgReturnChange = document.querySelector('.avg-return .change');
+        if (avgReturnElement && avgReturnChange) {
+            const avgReturn = Number(metrics.average_return) || 0;
+            const bestTrade = Number(metrics.best_trade) || 0;
+            avgReturnElement.textContent = `₹${avgReturn.toFixed(2)}`;
+            avgReturnChange.textContent = `Best: ₹${bestTrade.toFixed(2)}`;
+        }
+
+        // Update performance summary
+        updatePerformanceSummary(metrics);
+    } catch (error) {
+        console.error('Error updating dashboard metrics:', error);
+    }
 }
 
 // Function to update performance summary
 function updatePerformanceSummary(metrics) {
-    const summaryItems = {
-        'Monthly P&L': `₹${metrics.total_profit_loss.toFixed(2)}`,
-        'Best Trade': `₹${metrics.best_trade.toFixed(2)}`,
-        'Win Streak': `${metrics.win_streak} trades`,
-        'Avg Hold Time': 'Calculating...'
-    };
+    if (!metrics) return;
 
-    const summaryGrid = document.querySelector('.summary-grid');
-    if (summaryGrid) {
-        summaryGrid.innerHTML = Object.entries(summaryItems).map(([label, value]) => `
-            <div class="summary-item">
-                <h4>${label}</h4>
-                <p>${value}</p>
-            </div>
-        `).join('');
+    try {
+        const summaryItems = {
+            'Monthly P&L': `₹${(Number(metrics.total_profit_loss) || 0).toFixed(2)}`,
+            'Best Trade': `₹${(Number(metrics.best_trade) || 0).toFixed(2)}`,
+            'Win Streak': `${metrics.win_streak || 0} trades`,
+            'Avg Hold Time': 'Calculating...'
+        };
+
+        const summaryGrid = document.querySelector('.summary-grid');
+        if (summaryGrid) {
+            summaryGrid.innerHTML = Object.entries(summaryItems).map(([label, value]) => `
+                <div class="summary-item">
+                    <h4>${label}</h4>
+                    <p>${value}</p>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Error updating performance summary:', error);
     }
 }
 
@@ -864,6 +892,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error('User not authenticated');
             }
 
+            // Validate trade data
+            if (!tradeData.positionName || !tradeData.quantity || !tradeData.entryPrice || !tradeData.exitPrice) {
+                throw new Error('Please fill in all required fields');
+            }
+
+            // Ensure numeric values
+            tradeData.quantity = Number(tradeData.quantity);
+            tradeData.entryPrice = Number(tradeData.entryPrice);
+            tradeData.exitPrice = Number(tradeData.exitPrice);
+
+            if (isNaN(tradeData.quantity) || isNaN(tradeData.entryPrice) || isNaN(tradeData.exitPrice)) {
+                throw new Error('Invalid numeric values for quantity or prices');
+            }
+
             const response = await fetch(`${API_URL}/api/trade/${user.email}`, {
                 method: 'POST',
                 headers: {
@@ -879,8 +921,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Update dashboard with new data
-            updateDashboardMetrics(data.metrics);
-            updateRecentTrades(data.trades);
+            if (data.metrics) {
+                updateDashboardMetrics(data.metrics);
+            }
+            if (data.trades) {
+                updateRecentTrades(data.trades);
+            }
 
             // Show success notification
             showNotification('Trade saved successfully!', 'success');

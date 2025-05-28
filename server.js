@@ -308,40 +308,46 @@ app.post('/api/trade/:email', checkDbConnection, async (req, res) => {
 
         const profit_loss = (exitPrice - entryPrice) * quantity;
         tradeData.profit_loss = profit_loss;
+        tradeData.timestamp = new Date().toISOString();
 
         // Find user and update trades
-        const result = await db.collection('users').findOneAndUpdate(
-            { email: req.params.email },
-            { 
-                $push: { trades: tradeData }
-            },
-            { returnDocument: 'after' }
-        );
-
-        if (!result.value) {
+        const user = await db.collection('users').findOne({ email: req.params.email });
+        
+        if (!user) {
             console.error('User not found:', req.params.email);
             return res.status(404).json({ error: 'User not found' });
         }
 
-        const user = result.value;
-        
-        // Calculate updated metrics
+        // Initialize trades array if it doesn't exist
         const trades = user.trades || [];
+        trades.push(tradeData);
+
+        // Initialize metrics object with default values
         let metrics = {
             total_profit_loss: 0,
             total_trades: trades.length,
             winning_trades: 0,
             win_rate: 0,
             average_return: 0,
-            best_trade: 0,
-            worst_trade: profit_loss
+            best_trade: profit_loss,
+            worst_trade: profit_loss,
+            win_streak: 0,
+            current_win_streak: 0
         };
 
         // Calculate metrics
         trades.forEach(trade => {
-            const tradePL = trade.profit_loss || 0;
+            const tradePL = Number(trade.profit_loss) || 0;
             metrics.total_profit_loss += tradePL;
-            if (tradePL > 0) metrics.winning_trades++;
+            
+            if (tradePL > 0) {
+                metrics.winning_trades++;
+                metrics.current_win_streak++;
+                metrics.win_streak = Math.max(metrics.win_streak, metrics.current_win_streak);
+            } else {
+                metrics.current_win_streak = 0;
+            }
+
             metrics.best_trade = Math.max(metrics.best_trade, tradePL);
             metrics.worst_trade = Math.min(metrics.worst_trade, tradePL);
         });
@@ -350,24 +356,26 @@ app.post('/api/trade/:email', checkDbConnection, async (req, res) => {
         metrics.win_rate = trades.length > 0 ? (metrics.winning_trades / trades.length) * 100 : 0;
         metrics.average_return = trades.length > 0 ? metrics.total_profit_loss / trades.length : 0;
 
-        // Update user metrics
+        // Update user with new trades and metrics
         await db.collection('users').updateOne(
             { email: req.params.email },
-            { $set: { metrics: metrics } }
+            { 
+                $set: { 
+                    trades: trades,
+                    metrics: metrics
+                }
+            }
         );
-
-        // Get updated user data
-        const updatedUser = await db.collection('users').findOne({ email: req.params.email });
 
         console.log('Trade saved successfully:', {
             tradeData,
-            metrics: updatedUser.metrics
+            metrics: metrics
         });
 
         res.json({
             message: 'Trade added successfully',
-            trades: updatedUser.trades,
-            metrics: updatedUser.metrics
+            trades: trades,
+            metrics: metrics
         });
 
     } catch (error) {
