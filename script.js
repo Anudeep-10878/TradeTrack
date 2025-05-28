@@ -682,15 +682,65 @@ const addTradeModalHTML = `
     </div>
 </div>`;
 
-// Add the modal to the page when DOM loads
+const nakedPositionModalHTML = `
+<div id="nakedPositionModal" class="modal">
+    <div class="modal-content trade-modal">
+        <span class="close-modal">&times;</span>
+        <h2>Add Naked Position</h2>
+        <form id="nakedPositionForm" class="trade-form">
+            <div class="form-group">
+                <label for="tradeDate">Date</label>
+                <input type="date" id="tradeDate" name="date" required>
+            </div>
+            <div class="form-group">
+                <label for="positionName">Position Name</label>
+                <input type="text" id="positionName" name="positionName" required placeholder="e.g., NIFTY 19400 CE">
+            </div>
+            <div class="form-group">
+                <label for="quantity">Total Quantity</label>
+                <input type="number" id="quantity" name="quantity" required min="1" placeholder="Enter quantity">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="entryPrice">Entry Price</label>
+                    <input type="number" id="entryPrice" name="entryPrice" required step="0.01" placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label for="exitPrice">Exit Price</label>
+                    <input type="number" id="exitPrice" name="exitPrice" required step="0.01" placeholder="0.00">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="entryReason">Entry Reason</label>
+                <textarea id="entryReason" name="entryReason" rows="3" placeholder="Explain your reason for entering this position..."></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="cancel-trade-btn">Cancel</button>
+                <button type="submit" class="submit-trade-btn">Add Position</button>
+            </div>
+        </form>
+    </div>
+</div>`;
+
+// Add the modals to the page when DOM loads
 document.addEventListener('DOMContentLoaded', function() {
     // Add trade modal to body
     document.body.insertAdjacentHTML('beforeend', addTradeModalHTML);
+    document.body.insertAdjacentHTML('beforeend', nakedPositionModalHTML);
     
     // Add Trade button click handler
     const addTradeBtn = document.querySelector('.add-trade-btn');
     const addTradeModal = document.getElementById('addTradeModal');
-    const closeModal = addTradeModal.querySelector('.close-modal');
+    const nakedPositionModal = document.getElementById('nakedPositionModal');
+    const closeModals = document.querySelectorAll('.close-modal');
+    const cancelBtns = document.querySelectorAll('.cancel-trade-btn');
+    const nakedPositionForm = document.getElementById('nakedPositionForm');
+
+    // Set today's date as default
+    const tradeDateInput = document.getElementById('tradeDate');
+    const today = new Date().toISOString().split('T')[0];
+    tradeDateInput.value = today;
+    tradeDateInput.max = today; // Prevent future dates
 
     // Position type buttons handler
     const positionBtns = addTradeModal.querySelectorAll('.position-btn');
@@ -700,11 +750,15 @@ document.addEventListener('DOMContentLoaded', function() {
             positionBtns.forEach(b => b.classList.remove('active'));
             // Add active class to clicked button
             btn.classList.add('active');
-            // Here you can add logic to handle the button click
+            
             const selectedType = btn.dataset.type;
-            console.log('Selected position type:', selectedType);
-            // Close the modal after selection
-            hideAddTradeModal();
+            if (selectedType === 'naked') {
+                hideAddTradeModal();
+                showNakedPositionModal();
+            } else if (selectedType === 'strategy') {
+                // Handle strategy selection (to be implemented)
+                console.log('Strategy selected');
+            }
         });
     });
 
@@ -720,16 +774,88 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 300);
     }
 
+    function showNakedPositionModal() {
+        nakedPositionModal.style.display = 'flex';
+        setTimeout(() => nakedPositionModal.classList.add('show'), 10);
+    }
+
+    function hideNakedPositionModal() {
+        nakedPositionModal.classList.remove('show');
+        setTimeout(() => {
+            nakedPositionModal.style.display = 'none';
+            nakedPositionForm.reset();
+            tradeDateInput.value = today; // Reset date to today
+        }, 300);
+    }
+
     // Show modal when Add Trade button is clicked
     addTradeBtn.addEventListener('click', showAddTradeModal);
 
-    // Hide modal when close button is clicked
-    closeModal.addEventListener('click', hideAddTradeModal);
+    // Hide modals when close button is clicked
+    closeModals.forEach(closeBtn => {
+        closeBtn.addEventListener('click', () => {
+            hideAddTradeModal();
+            hideNakedPositionModal();
+        });
+    });
 
-    // Hide modal when clicking outside
+    // Hide modals when cancel button is clicked
+    cancelBtns.forEach(cancelBtn => {
+        cancelBtn.addEventListener('click', () => {
+            hideAddTradeModal();
+            hideNakedPositionModal();
+        });
+    });
+
+    // Hide modals when clicking outside
     window.addEventListener('click', (e) => {
         if (e.target === addTradeModal) {
             hideAddTradeModal();
+        }
+        if (e.target === nakedPositionModal) {
+            hideNakedPositionModal();
+        }
+    });
+
+    // Handle naked position form submission
+    nakedPositionForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(nakedPositionForm);
+        const tradeData = {
+            date: formData.get('date'),
+            positionName: formData.get('positionName'),
+            quantity: parseInt(formData.get('quantity')),
+            entryPrice: parseFloat(formData.get('entryPrice')),
+            exitPrice: parseFloat(formData.get('exitPrice')),
+            entryReason: formData.get('entryReason'),
+            type: 'naked',
+            timestamp: new Date().toISOString()
+        };
+
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user || !user.email) {
+                throw new Error('User not authenticated');
+            }
+
+            const response = await saveTrade(user.email, tradeData);
+            console.log('Trade saved successfully:', response);
+            
+            // Update the dashboard
+            const updatedUser = await getUserData(user.email);
+            if (updatedUser) {
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+                updateDashboardMetrics(updatedUser);
+                updateRecentTrades(updatedUser.trades);
+            }
+
+            hideNakedPositionModal();
+            // Show success message
+            alert('Position added successfully!');
+        } catch (error) {
+            console.error('Error saving position:', error);
+            alert('Failed to save position. Please try again.');
         }
     });
 });
