@@ -1809,4 +1809,18 @@ footer {
     color: #FFD700;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+}
+
+.no-trades-message {
+    text-align: center;
+    padding: 2rem;
+    color: rgba(255, 255, 255, 0.6);
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 215, 0, 0.1);
+    border-radius: 8px;
+}
+
+.no-trades-message p {
+    margin: 0;
+    font-size: 0.9rem;
 } 
