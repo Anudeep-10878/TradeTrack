@@ -1135,8 +1135,7 @@ footer {
     transition: opacity 0.3s ease;
     justify-content: center;
     align-items: center;
-    padding: 20px;
-    overflow-y: auto;
+    overflow: hidden;
 }
 
 .modal.show {
@@ -1160,10 +1159,8 @@ footer {
 }
 
 .modal-content {
-    margin: 20px auto;
     position: relative;
-    max-height: calc(100vh - 40px);
-    overflow-y: auto;
+    overflow: visible;
 }
 
 #loginModal.show .modal-content {
@@ -1653,6 +1650,7 @@ footer {
     border: 2px solid #FFD700;
     border-radius: 8px;
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.15);
+    overflow: visible;
 }
 
 .trade-form {
@@ -1690,8 +1688,8 @@ footer {
 }
 
 .form-group textarea {
-    height: 50px;
-    resize: vertical;
+    height: 45px;
+    resize: none;
 }
 
 .form-actions {
