@@ -659,4 +659,241 @@ document.addEventListener('DOMContentLoaded', () => {
         // Initialize aria-expanded state
         mobileNavBtn.setAttribute('aria-expanded', 'false');
     }
+});
+
+// Add Trade Modal HTML
+const addTradeModalHTML = `
+<div id="addTradeModal" class="modal">
+    <div class="modal-content trade-modal">
+        <span class="close-modal">&times;</span>
+        <h2>Add New Trade</h2>
+        <form id="addTradeForm" class="trade-form">
+            <div class="form-group">
+                <label for="tradeSymbol">Symbol</label>
+                <input type="text" id="tradeSymbol" name="symbol" required placeholder="e.g., NIFTY, BANKNIFTY">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="tradeType">Type</label>
+                    <select id="tradeType" name="type" required>
+                        <option value="">Select Type</option>
+                        <option value="LONG">Long</option>
+                        <option value="SHORT">Short</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="tradeQuantity">Quantity</label>
+                    <input type="number" id="tradeQuantity" name="quantity" required min="1">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="entryPrice">Entry Price</label>
+                    <input type="number" id="entryPrice" name="entry" required step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="exitPrice">Exit Price</label>
+                    <input type="number" id="exitPrice" name="exit" required step="0.01">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="stopLoss">Stop Loss</label>
+                    <input type="number" id="stopLoss" name="stopLoss" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="target">Target</label>
+                    <input type="number" id="target" name="target" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="tradeNotes">Notes</label>
+                <textarea id="tradeNotes" name="notes" rows="3" placeholder="Add your trade notes here..."></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="submit-trade-btn">Add Trade</button>
+                <button type="button" class="cancel-trade-btn">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>`;
+
+// Add the modal to the page when DOM loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Add trade modal to body
+    document.body.insertAdjacentHTML('beforeend', addTradeModalHTML);
+    
+    // Add Trade button click handler
+    const addTradeBtn = document.querySelector('.add-trade-btn');
+    const addTradeModal = document.getElementById('addTradeModal');
+    const closeModal = addTradeModal.querySelector('.close-modal');
+    const cancelBtn = addTradeModal.querySelector('.cancel-trade-btn');
+    const addTradeForm = document.getElementById('addTradeForm');
+
+    function showAddTradeModal() {
+        addTradeModal.style.display = 'flex';
+        setTimeout(() => addTradeModal.classList.add('show'), 10);
+    }
+
+    function hideAddTradeModal() {
+        addTradeModal.classList.remove('show');
+        setTimeout(() => {
+            addTradeModal.style.display = 'none';
+            addTradeForm.reset();
+        }, 300);
+    }
+
+    // Show modal when Add Trade button is clicked
+    addTradeBtn.addEventListener('click', showAddTradeModal);
+
+    // Hide modal when close button is clicked
+    closeModal.addEventListener('click', hideAddTradeModal);
+    cancelBtn.addEventListener('click', hideAddTradeModal);
+
+    // Hide modal when clicking outside
+    window.addEventListener('click', (e) => {
+        if (e.target === addTradeModal) {
+            hideAddTradeModal();
+        }
+    });
+
+    // Handle form submission
+    addTradeForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(addTradeForm);
+        const tradeData = {
+            symbol: formData.get('symbol'),
+            type: formData.get('type'),
+            quantity: parseInt(formData.get('quantity')),
+            entry: parseFloat(formData.get('entry')),
+            exit: parseFloat(formData.get('exit')),
+            stopLoss: formData.get('stopLoss') ? parseFloat(formData.get('stopLoss')) : null,
+            target: formData.get('target') ? parseFloat(formData.get('target')) : null,
+            notes: formData.get('notes'),
+            date: new Date().toISOString()
+        };
+
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user || !user.email) {
+                throw new Error('User not authenticated');
+            }
+
+            const response = await saveTrade(user.email, tradeData);
+            console.log('Trade saved successfully:', response);
+            
+            // Update the dashboard
+            const updatedUser = await getUserData(user.email);
+            if (updatedUser) {
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+                updateDashboardMetrics(updatedUser);
+                updateRecentTrades(updatedUser.trades);
+            }
+
+            hideAddTradeModal();
+            // Show success message
+            alert('Trade added successfully!');
+        } catch (error) {
+            console.error('Error saving trade:', error);
+            alert('Failed to save trade. Please try again.');
+        }
+    });
+});
+
+// Add these styles to your existing styles
+const tradeModalStyles = `
+.trade-modal {
+    max-width: 600px;
+    width: 90%;
+}
+
+.trade-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: #333;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+.submit-trade-btn,
+.cancel-trade-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.submit-trade-btn {
+    background-color: #FFD700;
+    color: #000;
+    border: none;
+}
+
+.submit-trade-btn:hover {
+    background-color: #F4C430;
+    transform: translateY(-1px);
+}
+
+.cancel-trade-btn {
+    background-color: transparent;
+    color: #666;
+    border: 1px solid #ddd;
+}
+
+.cancel-trade-btn:hover {
+    background-color: #f5f5f5;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .trade-modal {
+        width: 95%;
+    }
+}`;
+
+// Add the styles to the page
+document.addEventListener('DOMContentLoaded', function() {
+    const style = document.createElement('style');
+    style.textContent = tradeModalStyles;
+    document.head.appendChild(style);
 }); 

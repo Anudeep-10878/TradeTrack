@@ -796,12 +796,58 @@ footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
+    padding: 1.5rem 2rem;
+    background-color: #000;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .dashboard-header h1 {
-    color: var(--text-color);
-    font-size: 2rem;
+    color: #fff;
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.add-trade-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #FFD700;
+    color: #000;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.add-trade-btn i {
+    font-size: 1rem;
+}
+
+.add-trade-btn:hover {
+    background-color: #F4C430;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+}
+
+.add-trade-btn:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* Responsive styles for the add trade button */
+@media (max-width: 768px) {
+    .dashboard-header {
+        padding: 1rem;
+    }
+
+    .add-trade-btn {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+    }
 }
 
 .dashboard-container {
