@@ -12,13 +12,23 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const targetElement = document.querySelector(targetId);
             if (targetElement) {
-                const offset = 20; // Adjust this value for desired spacing
-                const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - offset;
+                const navbarHeight = document.querySelector('.navbar').offsetHeight;
+                const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - navbarHeight;
                 
                 window.scrollTo({
                     top: targetPosition,
-                    behavior: 'smooth'
+                    behavior: 'smooth',
+                    duration: 1000 // Added duration for smoother animation
                 });
+
+                // Add active state to the clicked link
+                links.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+
+                // Remove active state after scrolling is complete
+                setTimeout(() => {
+                    link.classList.remove('active');
+                }, 1000);
             }
         });
     });
