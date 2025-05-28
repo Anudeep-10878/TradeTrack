@@ -1134,7 +1134,8 @@ footer {
     opacity: 0;
     transition: opacity 0.3s ease;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
+    padding-top: 100px; /* Add padding from top */
 }
 
 .modal.show {
@@ -1650,6 +1651,8 @@ footer {
     max-width: 400px;
     width: 90%;
     padding: 1.5rem !important;
+    margin-top: 2vh; /* Add margin from top */
+    transform: translateY(0) !important; /* Reset any transform */
 }
 
 .trade-form {
