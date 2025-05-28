@@ -856,62 +856,78 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Handle naked position form submission
-    nakedPositionForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(nakedPositionForm);
-        const tradeData = {
-            date: formData.get('date'),
-            positionName: formData.get('positionName'),
-            quantity: parseInt(formData.get('quantity')),
-            entryPrice: parseFloat(formData.get('entryPrice')),
-            exitPrice: parseFloat(formData.get('exitPrice')),
-            entryReason: formData.get('entryReason'),
-            type: 'naked',
-            timestamp: new Date().toISOString()
-        };
-
+    // Function to submit trade data
+    async function submitTrade(tradeData) {
         try {
             const user = JSON.parse(localStorage.getItem('user'));
             if (!user || !user.email) {
                 throw new Error('User not authenticated');
             }
 
-            // Show loading state
-            const submitBtn = nakedPositionForm.querySelector('.submit-trade-btn');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Adding...';
-            submitBtn.disabled = true;
+            const response = await fetch(`${API_URL}/api/trade/${user.email}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(tradeData)
+            });
 
-            const response = await saveTrade(user.email, tradeData);
-            console.log('Trade saved successfully:', response);
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to save trade');
+            }
+
+            // Update dashboard with new data
+            updateDashboardMetrics(data.metrics);
+            updateRecentTrades(data.trades);
+
+            // Show success notification
+            showNotification('Trade saved successfully!', 'success');
             
-            // Update the dashboard with new data
-            if (response.metrics) {
-                updateDashboardMetrics(response.metrics);
-            }
-            if (response.trades) {
-                updateRecentTrades(response.trades);
+            // Close the modal
+            const nakedPositionModal = document.getElementById('nakedPositionModal');
+            if (nakedPositionModal) {
+                nakedPositionModal.style.display = 'none';
             }
 
-            // Update local storage
-            user.trades = response.trades;
-            user.metrics = response.metrics;
-            localStorage.setItem('user', JSON.stringify(user));
-
-            // Hide modal and show success message
-            hideNakedPositionModal();
-            showNotification('Position added successfully!', 'success');
-
+            return true;
         } catch (error) {
-            console.error('Error saving position:', error);
-            showNotification('Failed to save position. Please try again.', 'error');
-        } finally {
-            // Reset button state
-            const submitBtn = nakedPositionForm.querySelector('.submit-trade-btn');
-            submitBtn.textContent = 'Add Position';
-            submitBtn.disabled = false;
+            console.error('Error submitting trade:', error);
+            showNotification(error.message || 'Failed to save trade. Please try again.', 'error');
+            return false;
+        }
+    }
+
+    // Event listener for naked position form submission
+    document.addEventListener('submit', async function(e) {
+        if (e.target.matches('#nakedPositionForm')) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const tradeData = {
+                date: formData.get('date'),
+                positionName: formData.get('positionName'),
+                quantity: Number(formData.get('quantity')),
+                entryPrice: Number(formData.get('entryPrice')),
+                exitPrice: Number(formData.get('exitPrice')),
+                entryReason: formData.get('entryReason'),
+                type: 'naked'
+            };
+
+            // Validate the form data
+            if (!tradeData.positionName || !tradeData.quantity || !tradeData.entryPrice || !tradeData.exitPrice) {
+                showNotification('Please fill in all required fields', 'error');
+                return;
+            }
+
+            // Submit the trade
+            const success = await submitTrade(tradeData);
+            
+            if (success) {
+                // Reset the form
+                e.target.reset();
+            }
         }
     });
 });
@@ -1021,12 +1037,17 @@ function showNotification(message, type = 'success') {
     
     document.body.appendChild(notification);
     
-    // Trigger animation
-    setTimeout(() => notification.classList.add('show'), 100);
+    // Trigger reflow to enable animation
+    notification.offsetHeight;
     
-    // Remove notification after 3 seconds
+    // Show notification
+    notification.classList.add('show');
+    
+    // Remove after 3 seconds
     setTimeout(() => {
         notification.classList.remove('show');
-        setTimeout(() => notification.remove(), 300);
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
     }, 3000);
 } 

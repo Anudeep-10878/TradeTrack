@@ -289,47 +289,93 @@ function calculateTradeMetrics(trades) {
 }
 
 // Update the /api/trade/:email POST route
-app.post('/api/trade/:email', async (req, res) => {
+app.post('/api/trade/:email', checkDbConnection, async (req, res) => {
     try {
-        const { email } = req.params;
+        console.log('Received trade data:', req.body);
         const tradeData = req.body;
-
+        
         // Calculate profit/loss for this trade
-        const quantity = tradeData.quantity || 1;
-        const profit_loss = (tradeData.exitPrice - tradeData.entryPrice) * quantity;
+        const quantity = Number(tradeData.quantity) || 1;
+        const entryPrice = Number(tradeData.entryPrice);
+        const exitPrice = Number(tradeData.exitPrice);
+        
+        if (isNaN(entryPrice) || isNaN(exitPrice) || isNaN(quantity)) {
+            return res.status(400).json({ 
+                error: 'Invalid price or quantity values',
+                details: { entryPrice, exitPrice, quantity }
+            });
+        }
+
+        const profit_loss = (exitPrice - entryPrice) * quantity;
         tradeData.profit_loss = profit_loss;
 
-        // Find the user
-        const user = await db.collection('users').findOne({ email });
-        if (!user) {
+        // Find user and update trades
+        const result = await db.collection('users').findOneAndUpdate(
+            { email: req.params.email },
+            { 
+                $push: { trades: tradeData }
+            },
+            { returnDocument: 'after' }
+        );
+
+        if (!result.value) {
+            console.error('User not found:', req.params.email);
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Add the new trade
-        if (!user.trades) {
-            user.trades = [];
-        }
-        user.trades.push(tradeData);
-
+        const user = result.value;
+        
         // Calculate updated metrics
-        const metrics = calculateTradeMetrics(user.trades);
-        user.metrics = metrics;
+        const trades = user.trades || [];
+        let metrics = {
+            total_profit_loss: 0,
+            total_trades: trades.length,
+            winning_trades: 0,
+            win_rate: 0,
+            average_return: 0,
+            best_trade: 0,
+            worst_trade: profit_loss
+        };
 
-        // Save the updated user document
+        // Calculate metrics
+        trades.forEach(trade => {
+            const tradePL = trade.profit_loss || 0;
+            metrics.total_profit_loss += tradePL;
+            if (tradePL > 0) metrics.winning_trades++;
+            metrics.best_trade = Math.max(metrics.best_trade, tradePL);
+            metrics.worst_trade = Math.min(metrics.worst_trade, tradePL);
+        });
+
+        // Calculate win rate and average return
+        metrics.win_rate = trades.length > 0 ? (metrics.winning_trades / trades.length) * 100 : 0;
+        metrics.average_return = trades.length > 0 ? metrics.total_profit_loss / trades.length : 0;
+
+        // Update user metrics
         await db.collection('users').updateOne(
             { email: req.params.email },
-            { $set: { trades: user.trades, metrics: user.metrics } }
+            { $set: { metrics: metrics } }
         );
 
-        // Return the updated user data
+        // Get updated user data
+        const updatedUser = await db.collection('users').findOne({ email: req.params.email });
+
+        console.log('Trade saved successfully:', {
+            tradeData,
+            metrics: updatedUser.metrics
+        });
+
         res.json({
             message: 'Trade added successfully',
-            trades: user.trades,
-            metrics: user.metrics
+            trades: updatedUser.trades,
+            metrics: updatedUser.metrics
         });
+
     } catch (error) {
-        console.error('Error adding trade:', error);
-        res.status(500).json({ error: 'Failed to add trade' });
+        console.error('Error in POST /api/trade/:email:', error);
+        res.status(500).json({ 
+            error: 'Failed to save trade',
+            details: error.message
+        });
     }
 });
 
