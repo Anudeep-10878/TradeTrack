@@ -902,19 +902,19 @@ footer {
 
 .metric-content h3 {
     color: rgba(255, 255, 255, 0.7);
-    font-size: 1rem;
+    font-size: 0.9rem;
     margin-bottom: 0.5rem;
 }
 
 .metric-content .value {
     color: var(--text-color);
-    font-size: 2rem;
+    font-size: 1.6rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
 }
 
 .metric-content .change {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: rgba(255, 255, 255, 0.6);
 }
 
@@ -993,7 +993,7 @@ footer {
 
 .trade-info h4 {
     color: var(--text-color);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     margin-bottom: 0.2rem;
 }
 
@@ -1020,7 +1020,7 @@ footer {
 
 .trade-result .percentage {
     display: block;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: rgba(255, 255, 255, 0.5);
     margin-top: 0.2rem;
 }
@@ -1046,13 +1046,13 @@ footer {
 
 .metric-item h4 {
     color: rgba(255, 255, 255, 0.7);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     margin-bottom: 0.5rem;
 }
 
 .metric-item p {
     color: var(--text-color);
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 500;
 }
 
@@ -1314,13 +1314,13 @@ footer {
 
 .summary-item h4 {
     color: rgba(255, 255, 255, 0.7);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     margin-bottom: 0.5rem;
 }
 
 .summary-item p {
     color: var(--text-color);
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 500;
 }
 
