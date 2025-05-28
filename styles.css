@@ -56,7 +56,7 @@ body {
     padding: 5px 10px;
 }
 
-.nav-links a::after {
+.nav-links a:not(.get-started-btn)::after {
     content: '';
     position: absolute;
     width: 0;
@@ -68,8 +68,8 @@ body {
     transform: translateX(-50%);
 }
 
-.nav-links a:hover::after,
-.nav-links a.active::after {
+.nav-links a:not(.get-started-btn):hover::after,
+.nav-links a:not(.get-started-btn).active::after {
     width: 100%;
 }
 
@@ -1340,4 +1340,10 @@ footer {
     padding: 0.5rem;
     max-width: 400px;
     margin: 0 auto;
+}
+
+/* Keep the Get Started button styles separate */
+.get-started-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
 } 
