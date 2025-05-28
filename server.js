@@ -287,11 +287,10 @@ app.put('/api/user/:email/settings', checkDbConnection, async (req, res) => {
     try {
         console.log('Received settings update request for:', req.params.email);
         console.log('Request body:', {
-            ...req.body,
-            picture: req.body.picture ? '[base64 image data]' : undefined
+            ...req.body
         });
 
-        const { tradingCapital, tradingExperience, picture } = req.body;
+        const { tradingCapital, tradingExperience } = req.body;
         
         // Validate trading capital
         if (tradingCapital && (isNaN(tradingCapital) || tradingCapital < 0)) {
@@ -306,17 +305,10 @@ app.put('/api/user/:email/settings', checkDbConnection, async (req, res) => {
             return res.status(400).json({ error: 'Invalid trading experience value' });
         }
 
-        // Validate picture (if provided)
-        if (picture && !picture.startsWith('data:image/')) {
-            console.error('Invalid image format');
-            return res.status(400).json({ error: 'Invalid image format. Must be a valid base64 image.' });
-        }
-
         // Create update object with only provided fields
         const updateFields = {};
         if (tradingCapital !== undefined) updateFields.tradingCapital = tradingCapital;
         if (tradingExperience !== undefined) updateFields.tradingExperience = tradingExperience;
-        if (picture !== undefined) updateFields.picture = picture;
         updateFields.updatedAt = new Date();
 
         console.log('Updating user with fields:', Object.keys(updateFields));

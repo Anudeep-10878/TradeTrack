@@ -432,34 +432,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingsLink = document.querySelector('.nav-links a[href="#"]:has(i.fa-cog)');
     const closeSettingsModal = settingsModal.querySelector('.close-modal');
     const saveSettingsBtn = settingsModal.querySelector('.save-settings-btn');
-    const profileImageUpload = document.querySelector('.profile-image-upload');
     const profilePreview = document.getElementById('profilePreview');
-
-    // Handle profile picture upload
-    if (profileImageUpload) {
-        profileImageUpload.addEventListener('click', () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            
-            input.onchange = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const base64Image = e.target.result;
-                        profilePreview.src = base64Image;
-                        
-                        // Store the new image temporarily
-                        localStorage.setItem('tempProfilePic', base64Image);
-                    };
-                    reader.readAsDataURL(file);
-                }
-            };
-            
-            input.click();
-        });
-    }
 
     // Open settings modal with corrected display style
     if (settingsLink) {
@@ -488,7 +461,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Settings link not found');
     }
 
-    // Save settings with profile picture
+    // Save settings
     if (saveSettingsBtn) {
         saveSettingsBtn.addEventListener('click', async () => {
             const user = JSON.parse(localStorage.getItem('user'));
@@ -499,15 +472,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const tradingCapital = document.getElementById('tradingCapital').value;
             const tradingExperience = document.getElementById('tradingExperience').value;
-            const newProfilePic = localStorage.getItem('tempProfilePic');
 
             try {
                 // Log the request details
                 console.log('Saving settings to:', `${API_URL}/api/user/${user.email}/settings`);
                 console.log('Request payload:', {
                     tradingCapital: tradingCapital ? Number(tradingCapital) : undefined,
-                    tradingExperience: tradingExperience || undefined,
-                    picture: newProfilePic ? '[base64 image data]' : undefined
+                    tradingExperience: tradingExperience || undefined
                 });
 
                 // First check if the server is reachable
@@ -524,8 +495,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     body: JSON.stringify({
                         tradingCapital: tradingCapital ? Number(tradingCapital) : undefined,
-                        tradingExperience: tradingExperience || undefined,
-                        picture: newProfilePic || undefined
+                        tradingExperience: tradingExperience || undefined
                     })
                 });
 
@@ -553,25 +523,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const currentUser = JSON.parse(localStorage.getItem('user'));
                 const updatedUserData = {
                     ...currentUser,
-                    picture: updatedUser.picture || currentUser.picture,
                     tradingCapital: updatedUser.tradingCapital,
                     tradingExperience: updatedUser.tradingExperience
                 };
                 
                 localStorage.setItem('user', JSON.stringify(updatedUserData));
-                localStorage.removeItem('tempProfilePic'); // Clear temporary storage
-                
-                // Update the profile picture in the dashboard
-                const dashboardProfilePic = document.querySelector('.profile-pic');
-                if (dashboardProfilePic && updatedUser.picture) {
-                    dashboardProfilePic.src = updatedUser.picture;
-                }
-
-                // Update the profile preview in settings
-                const profilePreview = document.getElementById('profilePreview');
-                if (profilePreview && updatedUser.picture) {
-                    profilePreview.src = updatedUser.picture;
-                }
 
                 alert('Settings saved successfully!');
                 settingsModal.classList.remove('show');
@@ -591,7 +547,6 @@ document.addEventListener('DOMContentLoaded', () => {
             settingsModal.classList.remove('show');
             setTimeout(() => {
                 settingsModal.style.display = 'none';
-                localStorage.removeItem('tempProfilePic'); // Clear temporary storage when closing
             }, 300);
         });
     }
@@ -602,7 +557,6 @@ document.addEventListener('DOMContentLoaded', () => {
             settingsModal.classList.remove('show');
             setTimeout(() => {
                 settingsModal.style.display = 'none';
-                localStorage.removeItem('tempProfilePic'); // Clear temporary storage when closing
             }, 300);
         }
     });
