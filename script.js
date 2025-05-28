@@ -591,6 +591,11 @@ document.addEventListener('DOMContentLoaded', () => {
             dashboardNav.classList.toggle('open');
             overlay.classList.toggle('show');
             document.body.style.overflow = dashboardNav.classList.contains('open') ? 'hidden' : '';
+            
+            // Toggle aria-expanded state
+            mobileNavBtn.setAttribute('aria-expanded', 
+                dashboardNav.classList.contains('open') ? 'true' : 'false'
+            );
         });
 
         // Close nav when clicking overlay
@@ -598,6 +603,7 @@ document.addEventListener('DOMContentLoaded', () => {
             dashboardNav.classList.remove('open');
             overlay.classList.remove('show');
             document.body.style.overflow = '';
+            mobileNavBtn.setAttribute('aria-expanded', 'false');
         });
 
         // Close nav when clicking a link (for mobile)
@@ -608,6 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     dashboardNav.classList.remove('open');
                     overlay.classList.remove('show');
                     document.body.style.overflow = '';
+                    mobileNavBtn.setAttribute('aria-expanded', 'false');
                 }
             });
         });
@@ -618,7 +625,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 dashboardNav.classList.remove('open');
                 overlay.classList.remove('show');
                 document.body.style.overflow = '';
+                mobileNavBtn.setAttribute('aria-expanded', 'false');
             }
         });
+
+        // Initialize aria-expanded state
+        mobileNavBtn.setAttribute('aria-expanded', 'false');
     }
 }); 
