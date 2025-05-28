@@ -502,10 +502,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const newProfilePic = localStorage.getItem('tempProfilePic');
 
             try {
+                // Log the request details
+                console.log('Saving settings to:', `${API_URL}/api/user/${user.email}/settings`);
+                console.log('Request payload:', {
+                    tradingCapital: tradingCapital ? Number(tradingCapital) : undefined,
+                    tradingExperience: tradingExperience || undefined,
+                    picture: newProfilePic ? '[base64 image data]' : undefined
+                });
+
+                // First check if the server is reachable
+                const statusCheck = await fetch(`${API_URL}/status`);
+                if (!statusCheck.ok) {
+                    throw new Error('Server is not responding. Please try again later.');
+                }
+
                 const response = await fetch(`${API_URL}/api/user/${user.email}/settings`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify({
                         tradingCapital: tradingCapital ? Number(tradingCapital) : undefined,
@@ -514,12 +529,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     })
                 });
 
+                // Log the response status and headers
+                console.log('Response status:', response.status);
+                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+                // Handle non-JSON responses
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error('Received non-JSON response:', text);
+                    throw new Error('Server returned an invalid response. Please try again later.');
+                }
+
                 if (!response.ok) {
                     const errorData = await response.json();
                     throw new Error(errorData.error || 'Failed to save settings');
                 }
 
                 const updatedUser = await response.json();
+                console.log('Settings updated successfully:', updatedUser);
                 
                 // Update local storage with new settings
                 const currentUser = JSON.parse(localStorage.getItem('user'));

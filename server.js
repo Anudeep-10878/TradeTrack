@@ -285,17 +285,31 @@ app.post('/api/trade/:email', checkDbConnection, async (req, res) => {
 // Update user settings
 app.put('/api/user/:email/settings', checkDbConnection, async (req, res) => {
     try {
+        console.log('Received settings update request for:', req.params.email);
+        console.log('Request body:', {
+            ...req.body,
+            picture: req.body.picture ? '[base64 image data]' : undefined
+        });
+
         const { tradingCapital, tradingExperience, picture } = req.body;
         
         // Validate trading capital
         if (tradingCapital && (isNaN(tradingCapital) || tradingCapital < 0)) {
+            console.error('Invalid trading capital:', tradingCapital);
             return res.status(400).json({ error: 'Invalid trading capital value' });
         }
 
         // Validate trading experience
         const validExperiences = ['0-1', '1-2', '2-3', '3+'];
         if (tradingExperience && !validExperiences.includes(tradingExperience)) {
+            console.error('Invalid trading experience:', tradingExperience);
             return res.status(400).json({ error: 'Invalid trading experience value' });
+        }
+
+        // Validate picture (if provided)
+        if (picture && !picture.startsWith('data:image/')) {
+            console.error('Invalid image format');
+            return res.status(400).json({ error: 'Invalid image format. Must be a valid base64 image.' });
         }
 
         // Create update object with only provided fields
@@ -305,6 +319,11 @@ app.put('/api/user/:email/settings', checkDbConnection, async (req, res) => {
         if (picture !== undefined) updateFields.picture = picture;
         updateFields.updatedAt = new Date();
 
+        console.log('Updating user with fields:', Object.keys(updateFields));
+
+        // Set response headers
+        res.setHeader('Content-Type', 'application/json');
+
         const result = await db.collection('users').findOneAndUpdate(
             { email: req.params.email },
             { $set: updateFields },
@@ -312,13 +331,15 @@ app.put('/api/user/:email/settings', checkDbConnection, async (req, res) => {
         );
 
         if (!result.value) {
+            console.error('User not found:', req.params.email);
             return res.status(404).json({ error: 'User not found' });
         }
 
+        console.log('Settings updated successfully for:', req.params.email);
         res.json(result.value);
     } catch (error) {
         console.error('Error in PUT /api/user/:email/settings:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: error.message || 'Internal server error' });
     }
 });
 
