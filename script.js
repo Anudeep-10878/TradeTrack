@@ -669,7 +669,7 @@ const addTradeModalHTML = `
         <h2>Select Position Type</h2>
         <div class="position-type-selector">
             <div class="position-buttons">
-                <button type="button" class="position-btn active" data-type="naked">
+                <button type="button" class="position-btn" data-type="naked">
                     <i class="fas fa-user"></i>
                     Naked Position
                 </button>
