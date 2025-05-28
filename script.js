@@ -419,6 +419,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingsLink = document.querySelector('.nav-links a[href="#"]:has(i.fa-cog)');
     const closeSettingsModal = settingsModal.querySelector('.close-modal');
     const saveSettingsBtn = settingsModal.querySelector('.save-settings-btn');
+    const profileImageUpload = document.querySelector('.profile-image-upload');
+    const profilePreview = document.getElementById('profilePreview');
+
+    // Handle profile picture upload
+    if (profileImageUpload) {
+        profileImageUpload.addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const base64Image = e.target.result;
+                        profilePreview.src = base64Image;
+                        
+                        // Store the new image temporarily
+                        localStorage.setItem('tempProfilePic', base64Image);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            
+            input.click();
+        });
+    }
 
     // Open settings modal with corrected display style
     if (settingsLink) {
@@ -447,27 +475,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Settings link not found');
     }
 
-    // Close settings modal with animation
-    if (closeSettingsModal) {
-        closeSettingsModal.addEventListener('click', () => {
-            settingsModal.classList.remove('show');
-            setTimeout(() => {
-                settingsModal.style.display = 'none';
-            }, 300);
-        });
-    }
-
-    // Close modal when clicking outside
-    window.addEventListener('click', (e) => {
-        if (e.target === settingsModal) {
-            settingsModal.classList.remove('show');
-            setTimeout(() => {
-                settingsModal.style.display = 'none';
-            }, 300);
-        }
-    });
-
-    // Save settings
+    // Save settings with profile picture
     if (saveSettingsBtn) {
         saveSettingsBtn.addEventListener('click', async () => {
             const user = JSON.parse(localStorage.getItem('user'));
@@ -478,6 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const tradingCapital = document.getElementById('tradingCapital').value;
             const tradingExperience = document.getElementById('tradingExperience').value;
+            const newProfilePic = localStorage.getItem('tempProfilePic');
 
             try {
                 const response = await fetch(`${API_URL}/api/user/${user.email}/settings`, {
@@ -487,7 +496,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     body: JSON.stringify({
                         tradingCapital: tradingCapital ? Number(tradingCapital) : null,
-                        tradingExperience: tradingExperience || null
+                        tradingExperience: tradingExperience || null,
+                        picture: newProfilePic || user.picture
                     })
                 });
 
@@ -499,11 +509,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Update local storage with new settings
                 const currentUser = JSON.parse(localStorage.getItem('user'));
-                localStorage.setItem('user', JSON.stringify({
+                const updatedUserData = {
                     ...currentUser,
+                    picture: newProfilePic || currentUser.picture,
                     tradingCapital: updatedUser.tradingCapital,
                     tradingExperience: updatedUser.tradingExperience
-                }));
+                };
+                
+                localStorage.setItem('user', JSON.stringify(updatedUserData));
+                localStorage.removeItem('tempProfilePic'); // Clear temporary storage
+                
+                // Update the profile picture in the dashboard
+                const dashboardProfilePic = document.querySelector('.profile-pic');
+                if (dashboardProfilePic && newProfilePic) {
+                    dashboardProfilePic.src = newProfilePic;
+                }
 
                 alert('Settings saved successfully!');
                 settingsModal.classList.remove('show');
@@ -516,4 +536,26 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Close settings modal with animation
+    if (closeSettingsModal) {
+        closeSettingsModal.addEventListener('click', () => {
+            settingsModal.classList.remove('show');
+            setTimeout(() => {
+                settingsModal.style.display = 'none';
+                localStorage.removeItem('tempProfilePic'); // Clear temporary storage when closing
+            }, 300);
+        });
+    }
+
+    // Close modal when clicking outside
+    window.addEventListener('click', (e) => {
+        if (e.target === settingsModal) {
+            settingsModal.classList.remove('show');
+            setTimeout(() => {
+                settingsModal.style.display = 'none';
+                localStorage.removeItem('tempProfilePic'); // Clear temporary storage when closing
+            }, 300);
+        }
+    });
 }); 

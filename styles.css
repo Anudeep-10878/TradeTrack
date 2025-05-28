@@ -397,56 +397,47 @@ body {
 }
 
 .profile-section {
+    text-align: center;
+    margin-bottom: 30px;
     display: flex;
-    gap: 3rem;
-    margin-bottom: 3rem;
-    align-items: center;
+    justify-content: center;
 }
 
-.profile-image {
-    flex-shrink: 0;
+.profile-image-upload {
     position: relative;
-    width: 180px;
-    height: 180px;
+    display: inline-block;
+    cursor: pointer;
+    width: 150px;
+    height: 150px;
 }
 
-.profile-image::before {
-    content: '';
-    position: absolute;
-    top: -3px;
-    left: -3px;
-    right: -3px;
-    bottom: -3px;
-    border: 2px solid var(--primary-color);
+.profile-pic-large {
+    width: 150px;
+    height: 150px;
     border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--primary-color);
+    box-shadow: 0 2px 10px rgba(255, 215, 0, 0.2);
 }
 
-.profile-image img {
-    width: 180px;
-    height: 180px;
-    border-radius: 50%;
-    background-color: var(--background-color);
-    position: relative;
-    z-index: 1;
-}
-
-.profile-image::after {
-    content: '</>';
+.profile-pic-overlay {
     position: absolute;
-    bottom: -5px;
-    right: -5px;
-    background-color: var(--primary-color);
-    color: var(--background-color);
+    bottom: 0;
+    right: 0;
+    background: var(--primary-color);
     width: 40px;
     height: 40px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
-    font-size: 16px;
+    color: var(--background-color);
     border: 2px solid var(--background-color);
-    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.profile-image-upload:hover .profile-pic-overlay {
+    transform: scale(1.1);
 }
 
 .profile-info {
@@ -1120,4 +1111,34 @@ footer {
     .stats-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* Form styling updates */
+.form-group select {
+    background-color: var(--background-color);
+    border: 1px solid var(--primary-color);
+    color: var(--text-color);
+    padding: 12px;
+    border-radius: 6px;
+    width: 100%;
+    font-size: 14px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23FFD700' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    cursor: pointer;
+}
+
+.form-group select option {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    padding: 12px;
+}
+
+.form-group select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
 } 
