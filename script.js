@@ -683,36 +683,36 @@ const addTradeModalHTML = `
                 </div>
                 <div class="form-group">
                     <label for="tradeQuantity">Quantity</label>
-                    <input type="number" id="tradeQuantity" name="quantity" required min="1">
+                    <input type="number" id="tradeQuantity" name="quantity" required min="1" placeholder="1">
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label for="entryPrice">Entry Price</label>
-                    <input type="number" id="entryPrice" name="entry" required step="0.01">
+                    <label for="entryPrice">Entry</label>
+                    <input type="number" id="entryPrice" name="entry" required step="0.01" placeholder="0.00">
                 </div>
                 <div class="form-group">
-                    <label for="exitPrice">Exit Price</label>
-                    <input type="number" id="exitPrice" name="exit" required step="0.01">
+                    <label for="exitPrice">Exit</label>
+                    <input type="number" id="exitPrice" name="exit" required step="0.01" placeholder="0.00">
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label for="stopLoss">Stop Loss</label>
-                    <input type="number" id="stopLoss" name="stopLoss" step="0.01">
+                    <label for="stopLoss">SL</label>
+                    <input type="number" id="stopLoss" name="stopLoss" step="0.01" placeholder="0.00">
                 </div>
                 <div class="form-group">
                     <label for="target">Target</label>
-                    <input type="number" id="target" name="target" step="0.01">
+                    <input type="number" id="target" name="target" step="0.01" placeholder="0.00">
                 </div>
             </div>
             <div class="form-group">
                 <label for="tradeNotes">Notes</label>
-                <textarea id="tradeNotes" name="notes" rows="3" placeholder="Add your trade notes here..."></textarea>
+                <textarea id="tradeNotes" name="notes" rows="2" placeholder="Add your trade notes here..."></textarea>
             </div>
             <div class="form-actions">
-                <button type="submit" class="submit-trade-btn">Add Trade</button>
                 <button type="button" class="cancel-trade-btn">Cancel</button>
+                <button type="submit" class="submit-trade-btn">Add Trade</button>
             </div>
         </form>
     </div>
