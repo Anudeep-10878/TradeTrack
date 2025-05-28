@@ -236,17 +236,22 @@ function getDefaultMetrics() {
 
 // Function to ensure numeric values in metrics
 function sanitizeMetrics(metrics) {
-    if (!metrics) return getDefaultMetrics();
+    if (!metrics || typeof metrics !== 'object') {
+        console.warn('Invalid metrics object, using defaults');
+        return getDefaultMetrics();
+    }
     
     const defaultMetrics = getDefaultMetrics();
     const sanitized = {};
     
     // Ensure all metrics exist and are numbers
     Object.keys(defaultMetrics).forEach(key => {
-        if (metrics[key] === null || metrics[key] === undefined || isNaN(Number(metrics[key]))) {
+        let value = metrics[key];
+        if (value === null || value === undefined || isNaN(Number(value))) {
+            console.warn(`Invalid value for metric ${key}, using default`);
             sanitized[key] = defaultMetrics[key];
         } else {
-            sanitized[key] = Number(metrics[key]);
+            sanitized[key] = Number(value);
         }
     });
     
@@ -254,26 +259,27 @@ function sanitizeMetrics(metrics) {
 }
 
 // Function to update dashboard metrics
-function updateDashboardMetrics(metrics = getDefaultMetrics()) {
+function updateDashboardMetrics(metrics = null) {
     try {
         // Ensure metrics are properly sanitized
-        metrics = sanitizeMetrics(metrics);
+        const sanitizedMetrics = sanitizeMetrics(metrics);
+        console.log('Sanitized metrics:', sanitizedMetrics);
         
         // Update total profit/loss
         const profitLossElement = document.querySelector('.profit .value');
         const profitLossChange = document.querySelector('.profit .change');
         if (profitLossElement && profitLossChange) {
-            const totalPL = metrics.total_profit_loss;
+            const totalPL = sanitizedMetrics.total_profit_loss;
             profitLossElement.textContent = `₹${totalPL.toFixed(2)}`;
-            profitLossChange.textContent = `${metrics.total_trades} trades`;
+            profitLossChange.textContent = `${sanitizedMetrics.total_trades} trades`;
         }
         
         // Update total trades
         const tradesElement = document.querySelector('.trades .value');
         const tradesChange = document.querySelector('.trades .change');
         if (tradesElement && tradesChange) {
-            tradesElement.textContent = metrics.total_trades.toString();
-            const winStreak = metrics.current_win_streak;
+            tradesElement.textContent = sanitizedMetrics.total_trades.toString();
+            const winStreak = sanitizedMetrics.current_win_streak;
             tradesChange.textContent = winStreak > 0 ? 
                 `${winStreak} trade win streak` : 'No current streak';
         }
@@ -282,9 +288,9 @@ function updateDashboardMetrics(metrics = getDefaultMetrics()) {
         const winRateElement = document.querySelector('.win-rate .value');
         const winRateChange = document.querySelector('.win-rate .change');
         if (winRateElement && winRateChange) {
-            const winRate = metrics.win_rate;
-            const totalWinning = metrics.winning_trades;
-            const totalLosing = metrics.losing_trades;
+            const winRate = sanitizedMetrics.win_rate;
+            const totalWinning = sanitizedMetrics.winning_trades;
+            const totalLosing = sanitizedMetrics.losing_trades;
             winRateElement.textContent = `${winRate.toFixed(1)}%`;
             winRateChange.textContent = `${totalWinning}W - ${totalLosing}L`;
         }
@@ -293,18 +299,18 @@ function updateDashboardMetrics(metrics = getDefaultMetrics()) {
         const avgReturnElement = document.querySelector('.avg-return .value');
         const avgReturnChange = document.querySelector('.avg-return .change');
         if (avgReturnElement && avgReturnChange) {
-            const avgReturn = metrics.average_return;
-            const bestTrade = metrics.best_trade;
+            const avgReturn = sanitizedMetrics.average_return;
+            const bestTrade = sanitizedMetrics.best_trade;
             avgReturnElement.textContent = `₹${avgReturn.toFixed(2)}`;
             avgReturnChange.textContent = `Best: ₹${bestTrade.toFixed(2)}`;
         }
 
         // Update performance summary
-        updatePerformanceSummary(metrics);
+        updatePerformanceSummary(sanitizedMetrics);
 
         // Update recent trades list if trades are provided
-        if (metrics.trades) {
-            updateRecentTrades(metrics.trades);
+        if (sanitizedMetrics.trades) {
+            updateRecentTrades(sanitizedMetrics.trades);
         }
     } catch (error) {
         console.error('Error updating dashboard metrics:', error);
