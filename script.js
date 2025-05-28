@@ -122,37 +122,22 @@ function handleCredentialResponse(response) {
         const decoded = jwt_decode(credential);
         console.log('Successfully decoded token:', decoded);
         
-        // Save user data to localStorage immediately
+        // Save user data to localStorage
         localStorage.setItem('user', JSON.stringify(decoded));
         console.log('User data saved to localStorage');
         
-        // Redirect to dashboard immediately
-        console.log('Redirecting to dashboard...');
-        window.location.replace('dashboard.html');
-        
-        // After redirect, try to save user data to server
-        fetch(`${API_URL}/status`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Cannot connect to server');
-                }
-                return response.json();
-            })
-            .then(status => {
-                if (!status || status.mongodb === 'disconnected') {
-                    throw new Error('Server unavailable');
-                }
-                return saveUserToDatabase(decoded);
-            })
-            .then(user => {
-                if (user) {
-                    // Update localStorage with server response
-                    localStorage.setItem('user', JSON.stringify(user));
-                }
+        // Save user data to server first
+        saveUserToDatabase(decoded)
+            .then(() => {
+                // Only redirect after successful server save
+                console.log('Redirecting to dashboard...');
+                window.location.href = 'dashboard.html';
             })
             .catch(error => {
                 console.error('Error saving to server:', error);
-                // User is already redirected, no need to handle error here
+                // Still redirect even if server save fails
+                console.log('Redirecting to dashboard despite server error...');
+                window.location.href = 'dashboard.html';
             });
     } catch (error) {
         console.error('Error in handleCredentialResponse:', error);
