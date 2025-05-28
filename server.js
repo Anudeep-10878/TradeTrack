@@ -177,6 +177,21 @@ const checkDbConnection = (req, res, next) => {
     next();
 };
 
+// Function to create initial metrics object
+function createInitialMetrics() {
+    return {
+        total_profit_loss: 0,
+        total_trades: 0,
+        winning_trades: 0,
+        win_rate: 0,
+        average_return: 0,
+        best_trade: 0,
+        worst_trade: 0,
+        win_streak: 0,
+        current_win_streak: 0
+    };
+}
+
 // User Schema and Model (using native MongoDB driver)
 async function createUser(userData) {
     if (!isConnected) {
@@ -184,22 +199,41 @@ async function createUser(userData) {
     }
     
     try {
+        // Initialize user data with default metrics
+        const userWithDefaults = {
+            ...userData,
+            trades: [],
+            metrics: createInitialMetrics(),
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
+
         const result = await db.collection('users').findOneAndUpdate(
             { email: userData.email },
-            { $setOnInsert: { 
-                ...userData,
-                trades: [],
-                metrics: {
-                    total_trades: 0,
-                    winning_trades: 0,
-                    total_profit_loss: 0,
-                    win_rate: 0,
-                    average_return: 0
-                }
-            }},
-            { upsert: true, returnDocument: 'after' }
+            { 
+                $setOnInsert: userWithDefaults
+            },
+            { 
+                upsert: true, 
+                returnDocument: 'after'
+            }
         );
-        return result;
+
+        // If user exists but doesn't have metrics, initialize them
+        if (result.value && (!result.value.metrics || result.value.metrics.total_profit_loss === null)) {
+            await db.collection('users').updateOne(
+                { email: userData.email },
+                { 
+                    $set: { 
+                        metrics: createInitialMetrics(),
+                        updatedAt: new Date()
+                    }
+                }
+            );
+            return await db.collection('users').findOne({ email: userData.email });
+        }
+
+        return result.value;
     } catch (error) {
         console.error('Error creating user:', error);
         throw error;
@@ -310,7 +344,7 @@ app.post('/api/trade/:email', checkDbConnection, async (req, res) => {
         tradeData.profit_loss = profit_loss;
         tradeData.timestamp = new Date().toISOString();
 
-        // Find user and update trades
+        // Find user and ensure metrics exist
         const user = await db.collection('users').findOne({ email: req.params.email });
         
         if (!user) {
@@ -318,21 +352,24 @@ app.post('/api/trade/:email', checkDbConnection, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        // Initialize or get existing metrics
+        let currentMetrics = user.metrics || createInitialMetrics();
+        
         // Initialize trades array if it doesn't exist
         const trades = user.trades || [];
         trades.push(tradeData);
 
-        // Initialize metrics object with default values
+        // Calculate new metrics
         let metrics = {
-            total_profit_loss: 0,
+            total_profit_loss: Number(currentMetrics.total_profit_loss) || 0,
             total_trades: trades.length,
             winning_trades: 0,
             win_rate: 0,
             average_return: 0,
             best_trade: profit_loss,
             worst_trade: profit_loss,
-            win_streak: 0,
-            current_win_streak: 0
+            win_streak: Number(currentMetrics.win_streak) || 0,
+            current_win_streak: Number(currentMetrics.current_win_streak) || 0
         };
 
         // Calculate metrics
@@ -362,7 +399,8 @@ app.post('/api/trade/:email', checkDbConnection, async (req, res) => {
             { 
                 $set: { 
                     trades: trades,
-                    metrics: metrics
+                    metrics: metrics,
+                    updatedAt: new Date()
                 }
             }
         );

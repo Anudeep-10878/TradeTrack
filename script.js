@@ -218,100 +218,27 @@ async function getUserData(email) {
     return response.json();
 }
 
-async function saveTrade(email, tradeData) {
-    const response = await fetch(`${API_URL}/api/trade/${email}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(tradeData)
-    });
-    
-    if (!response.ok) {
-        throw new Error('Failed to save trade');
-    }
-    
-    return response.json();
-}
-
-// Check authentication status
-function checkAuth() {
-    const user = localStorage.getItem('user');
-    
-    // Get the current page
-    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-    
-    if (!user) {
-        // If no user and we're not already on the index page, redirect to index
-        if (currentPage !== 'index.html') {
-            console.log('No user found, redirecting to login page');
-            window.location.replace('index.html');
-        }
-        return false;
-    }
-
-    try {
-        // Parse user data to verify it's valid JSON
-        const userData = JSON.parse(user);
-        if (!userData.email) {
-            console.error('Invalid user data found');
-            localStorage.removeItem('user');
-            if (currentPage !== 'index.html') {
-                window.location.replace('index.html');
-            }
-            return false;
-        }
-
-        // If user exists and we're on index page, redirect to dashboard
-        if (currentPage === 'index.html') {
-            console.log('User already logged in, redirecting to dashboard');
-            window.location.replace('dashboard.html');
-            return false;
-        }
-        
-        // Update dashboard if we're on the dashboard page
-        if (currentPage === 'dashboard.html') {
-            console.log('Updating dashboard with user data');
-            
-            // First update UI with local data
-            updateUserProfile();
-            
-            // Then try to get updated data from server
-            getUserData(userData.email)
-                .then(updatedUser => {
-                    if (updatedUser) {
-                        localStorage.setItem('user', JSON.stringify(updatedUser));
-                        updateDashboardMetrics(updatedUser.metrics);
-                        if (updatedUser.trades) {
-                            updateRecentTrades(updatedUser.trades);
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.warn('Error fetching user data from server:', error);
-                    // Don't logout on server error, just show what we have
-                });
-        }
-        
-        return true;
-    } catch (error) {
-        console.error('Error parsing user data:', error);
-        localStorage.removeItem('user');
-        if (currentPage !== 'index.html') {
-            window.location.replace('index.html');
-        }
-        return false;
-    }
+// Function to get default metrics
+function getDefaultMetrics() {
+    return {
+        total_profit_loss: 0,
+        total_trades: 0,
+        winning_trades: 0,
+        win_rate: 0,
+        average_return: 0,
+        best_trade: 0,
+        worst_trade: 0,
+        win_streak: 0,
+        current_win_streak: 0
+    };
 }
 
 // Function to update dashboard metrics
-function updateDashboardMetrics(metrics) {
-    if (!metrics) {
-        console.warn('No metrics provided to updateDashboardMetrics');
-        return;
-    }
-
+function updateDashboardMetrics(metrics = getDefaultMetrics()) {
     try {
+        // Ensure metrics object exists
+        metrics = metrics || getDefaultMetrics();
+        
         // Update total profit/loss
         const profitLossElement = document.querySelector('.profit .value');
         const profitLossChange = document.querySelector('.profit .change');
@@ -326,7 +253,7 @@ function updateDashboardMetrics(metrics) {
         const tradesChange = document.querySelector('.trades .change');
         if (tradesElement && tradesChange) {
             tradesElement.textContent = (metrics.total_trades || 0).toString();
-            const winStreak = metrics.current_win_streak || 0;
+            const winStreak = Number(metrics.current_win_streak) || 0;
             tradesChange.textContent = winStreak > 0 ? 
                 `${winStreak} trade win streak` : 'No current streak';
         }
@@ -336,8 +263,9 @@ function updateDashboardMetrics(metrics) {
         const winRateChange = document.querySelector('.win-rate .change');
         if (winRateElement && winRateChange) {
             const winRate = Number(metrics.win_rate) || 0;
+            const bestStreak = Number(metrics.win_streak) || 0;
             winRateElement.textContent = `${winRate.toFixed(1)}%`;
-            winRateChange.textContent = `Best: ${metrics.win_streak || 0} trades`;
+            winRateChange.textContent = `Best: ${bestStreak} trades`;
         }
         
         // Update average return
@@ -354,18 +282,19 @@ function updateDashboardMetrics(metrics) {
         updatePerformanceSummary(metrics);
     } catch (error) {
         console.error('Error updating dashboard metrics:', error);
+        showNotification('Error updating dashboard. Please refresh the page.', 'error');
     }
 }
 
 // Function to update performance summary
-function updatePerformanceSummary(metrics) {
-    if (!metrics) return;
-
+function updatePerformanceSummary(metrics = getDefaultMetrics()) {
     try {
+        metrics = metrics || getDefaultMetrics();
+        
         const summaryItems = {
             'Monthly P&L': `₹${(Number(metrics.total_profit_loss) || 0).toFixed(2)}`,
             'Best Trade': `₹${(Number(metrics.best_trade) || 0).toFixed(2)}`,
-            'Win Streak': `${metrics.win_streak || 0} trades`,
+            'Win Streak': `${Number(metrics.win_streak) || 0} trades`,
             'Avg Hold Time': 'Calculating...'
         };
 
@@ -906,6 +835,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error('Invalid numeric values for quantity or prices');
             }
 
+            if (tradeData.quantity <= 0) {
+                throw new Error('Quantity must be greater than 0');
+            }
+
+            if (tradeData.entryPrice <= 0 || tradeData.exitPrice <= 0) {
+                throw new Error('Prices must be greater than 0');
+            }
+
             const response = await fetch(`${API_URL}/api/trade/${user.email}`, {
                 method: 'POST',
                 headers: {
@@ -1096,4 +1033,74 @@ function showNotification(message, type = 'success') {
             notification.remove();
         }, 300);
     }, 3000);
+}
+
+// Check authentication status
+function checkAuth() {
+    const user = localStorage.getItem('user');
+    
+    // Get the current page
+    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    
+    if (!user) {
+        // If no user and we're not already on the index page, redirect to index
+        if (currentPage !== 'index.html') {
+            console.log('No user found, redirecting to login page');
+            window.location.replace('index.html');
+        }
+        return false;
+    }
+
+    try {
+        // Parse user data to verify it's valid JSON
+        const userData = JSON.parse(user);
+        if (!userData.email) {
+            console.error('Invalid user data found');
+            localStorage.removeItem('user');
+            if (currentPage !== 'index.html') {
+                window.location.replace('index.html');
+            }
+            return false;
+        }
+
+        // If user exists and we're on index page, redirect to dashboard
+        if (currentPage === 'index.html') {
+            console.log('User already logged in, redirecting to dashboard');
+            window.location.replace('dashboard.html');
+            return false;
+        }
+        
+        // Update dashboard if we're on the dashboard page
+        if (currentPage === 'dashboard.html') {
+            console.log('Updating dashboard with user data');
+            
+            // First update UI with local data
+            updateUserProfile();
+            
+            // Then try to get updated data from server
+            getUserData(userData.email)
+                .then(updatedUser => {
+                    if (updatedUser) {
+                        localStorage.setItem('user', JSON.stringify(updatedUser));
+                        updateDashboardMetrics(updatedUser.metrics);
+                        if (updatedUser.trades) {
+                            updateRecentTrades(updatedUser.trades);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.warn('Error fetching user data from server:', error);
+                    // Don't logout on server error, just show what we have
+                });
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Error parsing user data:', error);
+        localStorage.removeItem('user');
+        if (currentPage !== 'index.html') {
+            window.location.replace('index.html');
+        }
+        return false;
+    }
 } 
