@@ -233,27 +233,46 @@ function getDefaultMetrics() {
     };
 }
 
+// Function to ensure numeric values in metrics
+function sanitizeMetrics(metrics) {
+    if (!metrics) return getDefaultMetrics();
+    
+    const defaultMetrics = getDefaultMetrics();
+    const sanitized = {};
+    
+    // Ensure all metrics exist and are numbers
+    Object.keys(defaultMetrics).forEach(key => {
+        if (metrics[key] === null || metrics[key] === undefined || isNaN(metrics[key])) {
+            sanitized[key] = defaultMetrics[key];
+        } else {
+            sanitized[key] = Number(metrics[key]);
+        }
+    });
+    
+    return sanitized;
+}
+
 // Function to update dashboard metrics
 function updateDashboardMetrics(metrics = getDefaultMetrics()) {
     try {
-        // Ensure metrics object exists
-        metrics = metrics || getDefaultMetrics();
+        // Ensure metrics are properly sanitized
+        metrics = sanitizeMetrics(metrics);
         
         // Update total profit/loss
         const profitLossElement = document.querySelector('.profit .value');
         const profitLossChange = document.querySelector('.profit .change');
         if (profitLossElement && profitLossChange) {
-            const totalPL = Number(metrics.total_profit_loss) || 0;
+            const totalPL = metrics.total_profit_loss;
             profitLossElement.textContent = `₹${totalPL.toFixed(2)}`;
-            profitLossChange.textContent = `${metrics.total_trades || 0} trades`;
+            profitLossChange.textContent = `${metrics.total_trades} trades`;
         }
         
         // Update total trades
         const tradesElement = document.querySelector('.trades .value');
         const tradesChange = document.querySelector('.trades .change');
         if (tradesElement && tradesChange) {
-            tradesElement.textContent = (metrics.total_trades || 0).toString();
-            const winStreak = Number(metrics.current_win_streak) || 0;
+            tradesElement.textContent = metrics.total_trades.toString();
+            const winStreak = metrics.current_win_streak;
             tradesChange.textContent = winStreak > 0 ? 
                 `${winStreak} trade win streak` : 'No current streak';
         }
@@ -262,8 +281,8 @@ function updateDashboardMetrics(metrics = getDefaultMetrics()) {
         const winRateElement = document.querySelector('.win-rate .value');
         const winRateChange = document.querySelector('.win-rate .change');
         if (winRateElement && winRateChange) {
-            const winRate = Number(metrics.win_rate) || 0;
-            const bestStreak = Number(metrics.win_streak) || 0;
+            const winRate = metrics.win_rate;
+            const bestStreak = metrics.win_streak;
             winRateElement.textContent = `${winRate.toFixed(1)}%`;
             winRateChange.textContent = `Best: ${bestStreak} trades`;
         }
@@ -272,8 +291,8 @@ function updateDashboardMetrics(metrics = getDefaultMetrics()) {
         const avgReturnElement = document.querySelector('.avg-return .value');
         const avgReturnChange = document.querySelector('.avg-return .change');
         if (avgReturnElement && avgReturnChange) {
-            const avgReturn = Number(metrics.average_return) || 0;
-            const bestTrade = Number(metrics.best_trade) || 0;
+            const avgReturn = metrics.average_return;
+            const bestTrade = metrics.best_trade;
             avgReturnElement.textContent = `₹${avgReturn.toFixed(2)}`;
             avgReturnChange.textContent = `Best: ₹${bestTrade.toFixed(2)}`;
         }
@@ -289,12 +308,12 @@ function updateDashboardMetrics(metrics = getDefaultMetrics()) {
 // Function to update performance summary
 function updatePerformanceSummary(metrics = getDefaultMetrics()) {
     try {
-        metrics = metrics || getDefaultMetrics();
+        metrics = sanitizeMetrics(metrics);
         
         const summaryItems = {
-            'Monthly P&L': `₹${(Number(metrics.total_profit_loss) || 0).toFixed(2)}`,
-            'Best Trade': `₹${(Number(metrics.best_trade) || 0).toFixed(2)}`,
-            'Win Streak': `${Number(metrics.win_streak) || 0} trades`
+            'Monthly P&L': `₹${metrics.total_profit_loss.toFixed(2)}`,
+            'Best Trade': `₹${metrics.best_trade.toFixed(2)}`,
+            'Win Streak': `${metrics.win_streak} trades`
         };
 
         const summaryGrid = document.querySelector('.summary-grid');

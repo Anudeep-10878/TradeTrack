@@ -352,46 +352,66 @@ app.post('/api/trade/:email', checkDbConnection, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Initialize or get existing metrics
-        let currentMetrics = user.metrics || createInitialMetrics();
-        
+        // Initialize metrics if they don't exist or have null values
+        let currentMetrics = user.metrics || {
+            total_profit_loss: 0,
+            total_trades: 0,
+            winning_trades: 0,
+            win_rate: 0,
+            average_return: 0,
+            best_trade: 0,
+            worst_trade: 0,
+            win_streak: 0,
+            current_win_streak: 0
+        };
+
+        // Ensure all metric values are numbers
+        Object.keys(currentMetrics).forEach(key => {
+            if (currentMetrics[key] === null || isNaN(currentMetrics[key])) {
+                currentMetrics[key] = 0;
+            } else {
+                currentMetrics[key] = Number(currentMetrics[key]);
+            }
+        });
+
         // Initialize trades array if it doesn't exist
-        const trades = user.trades || [];
+        const trades = Array.isArray(user.trades) ? user.trades : [];
         trades.push(tradeData);
 
         // Calculate new metrics
         let metrics = {
-            total_profit_loss: Number(currentMetrics.total_profit_loss) || 0,
+            total_profit_loss: currentMetrics.total_profit_loss + profit_loss,
             total_trades: trades.length,
             winning_trades: 0,
             win_rate: 0,
             average_return: 0,
-            best_trade: profit_loss,
-            worst_trade: profit_loss,
-            win_streak: Number(currentMetrics.win_streak) || 0,
-            current_win_streak: Number(currentMetrics.current_win_streak) || 0
+            best_trade: Math.max(currentMetrics.best_trade, profit_loss),
+            worst_trade: Math.min(currentMetrics.worst_trade, profit_loss),
+            win_streak: currentMetrics.win_streak,
+            current_win_streak: profit_loss > 0 ? currentMetrics.current_win_streak + 1 : 0
         };
 
         // Calculate metrics
+        let total_return = 0;
         trades.forEach(trade => {
             const tradePL = Number(trade.profit_loss) || 0;
-            metrics.total_profit_loss += tradePL;
-            
             if (tradePL > 0) {
                 metrics.winning_trades++;
-                metrics.current_win_streak++;
-                metrics.win_streak = Math.max(metrics.win_streak, metrics.current_win_streak);
-            } else {
-                metrics.current_win_streak = 0;
             }
-
-            metrics.best_trade = Math.max(metrics.best_trade, tradePL);
-            metrics.worst_trade = Math.min(metrics.worst_trade, tradePL);
+            total_return += ((trade.exitPrice - trade.entryPrice) / trade.entryPrice) * 100;
         });
+
+        // Update win streak
+        metrics.win_streak = Math.max(metrics.win_streak, metrics.current_win_streak);
 
         // Calculate win rate and average return
         metrics.win_rate = trades.length > 0 ? (metrics.winning_trades / trades.length) * 100 : 0;
-        metrics.average_return = trades.length > 0 ? metrics.total_profit_loss / trades.length : 0;
+        metrics.average_return = trades.length > 0 ? total_return / trades.length : 0;
+
+        // Ensure all calculated values are numbers
+        Object.keys(metrics).forEach(key => {
+            metrics[key] = Number(metrics[key]) || 0;
+        });
 
         // Update user with new trades and metrics
         await db.collection('users').updateOne(
