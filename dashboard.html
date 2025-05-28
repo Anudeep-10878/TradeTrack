@@ -171,6 +171,47 @@
                 </div>
             </div>
         </main>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="modal">
+            <div class="modal-content settings-modal">
+                <span class="close-modal">&times;</span>
+                <h2>Settings</h2>
+                <div class="settings-form">
+                    <div class="profile-section">
+                        <div class="profile-image-upload">
+                            <img id="profilePreview" src="" alt="Profile Picture" class="profile-pic-large">
+                            <div class="profile-pic-overlay">
+                                <i class="fas fa-camera"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="settingsName">Name</label>
+                        <input type="text" id="settingsName" name="name" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="settingsEmail">Email</label>
+                        <input type="email" id="settingsEmail" name="email" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="tradingCapital">Trading Capital (₹)</label>
+                        <input type="number" id="tradingCapital" name="tradingCapital" placeholder="Enter your trading capital">
+                    </div>
+                    <div class="form-group">
+                        <label for="tradingExperience">Trading Experience</label>
+                        <select id="tradingExperience" name="tradingExperience">
+                            <option value="">Select experience</option>
+                            <option value="0-1">0-1 year</option>
+                            <option value="1-2">1-2 years</option>
+                            <option value="2-3">2-3 years</option>
+                            <option value="3+">3+ years</option>
+                        </select>
+                    </div>
+                    <button type="button" class="save-settings-btn">Save Changes</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>

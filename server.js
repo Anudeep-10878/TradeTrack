@@ -282,6 +282,45 @@ app.post('/api/trade/:email', checkDbConnection, async (req, res) => {
     }
 });
 
+// Update user settings
+app.put('/api/user/:email/settings', checkDbConnection, async (req, res) => {
+    try {
+        const { tradingCapital, tradingExperience } = req.body;
+        
+        // Validate trading capital
+        if (tradingCapital && (isNaN(tradingCapital) || tradingCapital < 0)) {
+            return res.status(400).json({ error: 'Invalid trading capital value' });
+        }
+
+        // Validate trading experience
+        const validExperiences = ['0-1', '1-2', '2-3', '3+'];
+        if (tradingExperience && !validExperiences.includes(tradingExperience)) {
+            return res.status(400).json({ error: 'Invalid trading experience value' });
+        }
+
+        const result = await db.collection('users').findOneAndUpdate(
+            { email: req.params.email },
+            { 
+                $set: {
+                    tradingCapital: tradingCapital,
+                    tradingExperience: tradingExperience,
+                    updatedAt: new Date()
+                }
+            },
+            { returnDocument: 'after' }
+        );
+
+        if (!result.value) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json(result.value);
+    } catch (error) {
+        console.error('Error in PUT /api/user/:email/settings:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Start server and connect to MongoDB
 const PORT = process.env.PORT || 3000;
 
