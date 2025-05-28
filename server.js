@@ -285,7 +285,7 @@ app.post('/api/trade/:email', checkDbConnection, async (req, res) => {
 // Update user settings
 app.put('/api/user/:email/settings', checkDbConnection, async (req, res) => {
     try {
-        const { tradingCapital, tradingExperience } = req.body;
+        const { tradingCapital, tradingExperience, picture } = req.body;
         
         // Validate trading capital
         if (tradingCapital && (isNaN(tradingCapital) || tradingCapital < 0)) {
@@ -298,15 +298,16 @@ app.put('/api/user/:email/settings', checkDbConnection, async (req, res) => {
             return res.status(400).json({ error: 'Invalid trading experience value' });
         }
 
+        // Create update object with only provided fields
+        const updateFields = {};
+        if (tradingCapital !== undefined) updateFields.tradingCapital = tradingCapital;
+        if (tradingExperience !== undefined) updateFields.tradingExperience = tradingExperience;
+        if (picture !== undefined) updateFields.picture = picture;
+        updateFields.updatedAt = new Date();
+
         const result = await db.collection('users').findOneAndUpdate(
             { email: req.params.email },
-            { 
-                $set: {
-                    tradingCapital: tradingCapital,
-                    tradingExperience: tradingExperience,
-                    updatedAt: new Date()
-                }
-            },
+            { $set: updateFields },
             { returnDocument: 'after' }
         );
 

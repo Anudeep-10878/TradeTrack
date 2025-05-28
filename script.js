@@ -508,14 +508,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        tradingCapital: tradingCapital ? Number(tradingCapital) : null,
-                        tradingExperience: tradingExperience || null,
-                        picture: newProfilePic || user.picture
+                        tradingCapital: tradingCapital ? Number(tradingCapital) : undefined,
+                        tradingExperience: tradingExperience || undefined,
+                        picture: newProfilePic || undefined
                     })
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to save settings');
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to save settings');
                 }
 
                 const updatedUser = await response.json();
@@ -524,7 +525,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const currentUser = JSON.parse(localStorage.getItem('user'));
                 const updatedUserData = {
                     ...currentUser,
-                    picture: newProfilePic || currentUser.picture,
+                    picture: updatedUser.picture || currentUser.picture,
                     tradingCapital: updatedUser.tradingCapital,
                     tradingExperience: updatedUser.tradingExperience
                 };
@@ -534,8 +535,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Update the profile picture in the dashboard
                 const dashboardProfilePic = document.querySelector('.profile-pic');
-                if (dashboardProfilePic && newProfilePic) {
-                    dashboardProfilePic.src = newProfilePic;
+                if (dashboardProfilePic && updatedUser.picture) {
+                    dashboardProfilePic.src = updatedUser.picture;
+                }
+
+                // Update the profile preview in settings
+                const profilePreview = document.getElementById('profilePreview');
+                if (profilePreview && updatedUser.picture) {
+                    profilePreview.src = updatedUser.picture;
                 }
 
                 alert('Settings saved successfully!');
@@ -545,7 +552,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, 300);
             } catch (error) {
                 console.error('Error saving settings:', error);
-                alert('Failed to save settings. Please try again.');
+                alert(error.message || 'Failed to save settings. Please try again.');
             }
         });
     }
