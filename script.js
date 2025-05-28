@@ -294,8 +294,7 @@ function updatePerformanceSummary(metrics = getDefaultMetrics()) {
         const summaryItems = {
             'Monthly P&L': `₹${(Number(metrics.total_profit_loss) || 0).toFixed(2)}`,
             'Best Trade': `₹${(Number(metrics.best_trade) || 0).toFixed(2)}`,
-            'Win Streak': `${Number(metrics.win_streak) || 0} trades`,
-            'Avg Hold Time': 'Calculating...'
+            'Win Streak': `${Number(metrics.win_streak) || 0} trades`
         };
 
         const summaryGrid = document.querySelector('.summary-grid');
