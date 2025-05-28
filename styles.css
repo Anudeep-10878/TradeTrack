@@ -984,14 +984,14 @@ footer {
 }
 
 .settings-modal {
-    max-width: 500px;
+    max-width: 400px;
     width: 90%;
     background-color: var(--background-color) !important;
     border: 2px solid var(--primary-color) !important;
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.2) !important;
     transform: translateY(-20px);
     transition: transform 0.3s ease;
-    padding: 2rem;
+    padding: 1.5rem;
 }
 
 .show .settings-modal {
@@ -1066,7 +1066,7 @@ footer {
 
 /* Form styling updates */
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .form-group label {
@@ -1081,10 +1081,10 @@ footer {
     background-color: rgba(255, 255, 255, 0.1);
     border: 1px solid var(--primary-color);
     color: var(--text-color);
-    padding: 12px;
+    padding: 8px 12px;
     border-radius: 6px;
     width: 100%;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .form-group input:read-only {
@@ -1096,13 +1096,13 @@ footer {
     background-color: var(--primary-color);
     color: var(--background-color);
     border: none;
-    padding: 12px;
+    padding: 10px;
     border-radius: 6px;
     width: 100%;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 16px;
+    font-size: 14px;
 }
 
 .save-settings-btn:hover {
@@ -1231,10 +1231,10 @@ footer {
 
 .settings-modal .profile-section {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 1.5rem;
+    padding: 0.5rem;
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    justify-content: center;
 }
 
 .settings-modal .profile-image-upload {
@@ -1281,16 +1281,16 @@ footer {
 /* Profile section in settings */
 .profile-section {
     text-align: center;
-    margin-bottom: 2rem;
-    padding: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 0.5rem;
     display: flex;
     justify-content: center;
 }
 
 .profile-display {
     position: relative;
-    width: 120px;
-    height: 120px;
+    width: 100px;
+    height: 100px;
     margin: 0 auto;
     border-radius: 50%;
     overflow: hidden;
@@ -1311,7 +1311,7 @@ footer {
 
 /* Settings form */
 .settings-form {
-    padding: 1rem;
-    max-width: 500px;
+    padding: 0.5rem;
+    max-width: 400px;
     margin: 0 auto;
 } 
