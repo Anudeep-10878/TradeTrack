@@ -282,9 +282,10 @@ function updateDashboardMetrics(metrics = getDefaultMetrics()) {
         const winRateChange = document.querySelector('.win-rate .change');
         if (winRateElement && winRateChange) {
             const winRate = metrics.win_rate;
-            const bestStreak = metrics.win_streak;
+            const totalWinning = metrics.winning_trades;
+            const totalLosing = metrics.losing_trades;
             winRateElement.textContent = `${winRate.toFixed(1)}%`;
-            winRateChange.textContent = `Best: ${bestStreak} trades`;
+            winRateChange.textContent = `${totalWinning}W - ${totalLosing}L`;
         }
         
         // Update average return
@@ -299,6 +300,11 @@ function updateDashboardMetrics(metrics = getDefaultMetrics()) {
 
         // Update performance summary
         updatePerformanceSummary(metrics);
+
+        // Update recent trades list if trades are provided
+        if (metrics.trades) {
+            updateRecentTrades(metrics.trades);
+        }
     } catch (error) {
         console.error('Error updating dashboard metrics:', error);
         showNotification('Error updating dashboard. Please refresh the page.', 'error');
@@ -355,7 +361,7 @@ function updateRecentTrades(trades) {
             </div>
             <div class="trade-result">
                 <p class="${trade.profit_loss >= 0 ? 'profit' : 'loss'}">
-                    ${trade.profit_loss >= 0 ? '+' : ''}₹${trade.profit_loss.toFixed(2)}
+                    ${trade.profit_loss >= 0 ? '+' : ''}₹${Math.abs(trade.profit_loss).toFixed(2)}
                 </p>
                 <span class="percentage">
                     ${((trade.exitPrice - trade.entryPrice) / trade.entryPrice * 100).toFixed(1)}%

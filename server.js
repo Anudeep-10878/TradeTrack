@@ -272,56 +272,6 @@ app.get('/api/user/:email', checkDbConnection, async (req, res) => {
     }
 });
 
-// Function to calculate trade metrics
-function calculateTradeMetrics(trades) {
-    const metrics = {
-        total_profit_loss: 0,
-        total_trades: trades.length,
-        win_rate: 0,
-        average_return: 0,
-        best_trade: 0,
-        worst_trade: 0,
-        win_streak: 0,
-        current_win_streak: 0
-    };
-
-    let winning_trades = 0;
-    let total_return_percentage = 0;
-
-    trades.forEach(trade => {
-        // Calculate profit/loss for this trade
-        const quantity = trade.quantity || 1;
-        const profit_loss = (trade.exitPrice - trade.entryPrice) * quantity;
-        trade.profit_loss = profit_loss;
-
-        // Update total P&L
-        metrics.total_profit_loss += profit_loss;
-
-        // Calculate return percentage
-        const return_percentage = ((trade.exitPrice - trade.entryPrice) / trade.entryPrice) * 100;
-        total_return_percentage += return_percentage;
-
-        // Update best and worst trades
-        metrics.best_trade = Math.max(metrics.best_trade, profit_loss);
-        metrics.worst_trade = Math.min(metrics.worst_trade, profit_loss);
-
-        // Count winning trades and update win streak
-        if (profit_loss > 0) {
-            winning_trades++;
-            metrics.current_win_streak++;
-            metrics.win_streak = Math.max(metrics.win_streak, metrics.current_win_streak);
-        } else {
-            metrics.current_win_streak = 0;
-        }
-    });
-
-    // Calculate win rate and average return
-    metrics.win_rate = (trades.length > 0) ? (winning_trades / trades.length) * 100 : 0;
-    metrics.average_return = (trades.length > 0) ? total_return_percentage / trades.length : 0;
-
-    return metrics;
-}
-
 // Update the /api/trade/:email POST route
 app.post('/api/trade/:email', checkDbConnection, async (req, res) => {
     try {
@@ -340,6 +290,7 @@ app.post('/api/trade/:email', checkDbConnection, async (req, res) => {
             });
         }
 
+        // Calculate profit/loss for this trade
         const profit_loss = (exitPrice - entryPrice) * quantity;
         tradeData.profit_loss = profit_loss;
         tradeData.timestamp = new Date().toISOString();
@@ -352,61 +303,54 @@ app.post('/api/trade/:email', checkDbConnection, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Initialize metrics if they don't exist or have null values
-        let currentMetrics = user.metrics || {
-            total_profit_loss: 0,
-            total_trades: 0,
-            winning_trades: 0,
-            win_rate: 0,
-            average_return: 0,
-            best_trade: 0,
-            worst_trade: 0,
-            win_streak: 0,
-            current_win_streak: 0
-        };
-
-        // Ensure all metric values are numbers
-        Object.keys(currentMetrics).forEach(key => {
-            if (currentMetrics[key] === null || isNaN(currentMetrics[key])) {
-                currentMetrics[key] = 0;
-            } else {
-                currentMetrics[key] = Number(currentMetrics[key]);
-            }
-        });
-
         // Initialize trades array if it doesn't exist
         const trades = Array.isArray(user.trades) ? user.trades : [];
         trades.push(tradeData);
 
         // Calculate new metrics
         let metrics = {
-            total_profit_loss: currentMetrics.total_profit_loss + profit_loss,
+            total_profit_loss: 0,
             total_trades: trades.length,
             winning_trades: 0,
+            losing_trades: 0,
             win_rate: 0,
             average_return: 0,
-            best_trade: Math.max(currentMetrics.best_trade, profit_loss),
-            worst_trade: Math.min(currentMetrics.worst_trade, profit_loss),
-            win_streak: currentMetrics.win_streak,
-            current_win_streak: profit_loss > 0 ? currentMetrics.current_win_streak + 1 : 0
+            best_trade: profit_loss,
+            worst_trade: profit_loss,
+            win_streak: 0,
+            current_win_streak: 0
         };
 
-        // Calculate metrics
-        let total_return = 0;
+        // Calculate metrics from all trades
+        let total_profit_loss = 0;
+        let current_win_streak = 0;
+        let max_win_streak = 0;
+
         trades.forEach(trade => {
             const tradePL = Number(trade.profit_loss) || 0;
+            total_profit_loss += tradePL;
+
+            // Update winning/losing trades count
             if (tradePL > 0) {
                 metrics.winning_trades++;
+                current_win_streak++;
+                max_win_streak = Math.max(max_win_streak, current_win_streak);
+            } else {
+                metrics.losing_trades++;
+                current_win_streak = 0;
             }
-            total_return += ((trade.exitPrice - trade.entryPrice) / trade.entryPrice) * 100;
+
+            // Update best and worst trades
+            metrics.best_trade = Math.max(metrics.best_trade, tradePL);
+            metrics.worst_trade = Math.min(metrics.worst_trade, tradePL);
         });
 
-        // Update win streak
-        metrics.win_streak = Math.max(metrics.win_streak, metrics.current_win_streak);
-
-        // Calculate win rate and average return
+        // Update final metrics
+        metrics.total_profit_loss = total_profit_loss;
+        metrics.win_streak = max_win_streak;
+        metrics.current_win_streak = current_win_streak;
         metrics.win_rate = trades.length > 0 ? (metrics.winning_trades / trades.length) * 100 : 0;
-        metrics.average_return = trades.length > 0 ? total_return / trades.length : 0;
+        metrics.average_return = trades.length > 0 ? total_profit_loss / trades.length : 0;
 
         // Ensure all calculated values are numbers
         Object.keys(metrics).forEach(key => {
