@@ -305,26 +305,39 @@ app.post('/api/trade/:email', checkDbConnection, async (req, res) => {
 
         // Initialize trades array if it doesn't exist
         const trades = Array.isArray(user.trades) ? user.trades : [];
-        trades.push(tradeData);
+        
+        // Initialize metrics with default values if they don't exist or are invalid
+        let metrics = user.metrics || {};
+        if (!metrics || typeof metrics !== 'object' || metrics.total_profit_loss === null) {
+            metrics = {
+                total_profit_loss: 0,
+                total_trades: 0,
+                winning_trades: 0,
+                losing_trades: 0,
+                win_rate: 0,
+                average_return: 0,
+                best_trade: 0,
+                worst_trade: 0,
+                win_streak: 0,
+                current_win_streak: 0
+            };
+        }
 
-        // Initialize metrics with default values
-        let metrics = {
-            total_profit_loss: 0,
-            total_trades: 0,
-            winning_trades: 0,
-            losing_trades: 0,
-            win_rate: 0,
-            average_return: 0,
-            best_trade: Number.NEGATIVE_INFINITY,
-            worst_trade: Number.POSITIVE_INFINITY,
-            win_streak: 0,
-            current_win_streak: 0
-        };
+        // Add new trade to trades array
+        trades.push(tradeData);
 
         // Calculate metrics from all trades
         let current_win_streak = 0;
         let max_win_streak = 0;
 
+        // Reset metrics before recalculating
+        metrics.total_profit_loss = 0;
+        metrics.winning_trades = 0;
+        metrics.losing_trades = 0;
+        metrics.best_trade = Number.NEGATIVE_INFINITY;
+        metrics.worst_trade = Number.POSITIVE_INFINITY;
+
+        // Recalculate all metrics from trades
         trades.forEach(trade => {
             const tradePL = Number(trade.profit_loss) || 0;
             metrics.total_profit_loss += tradePL;

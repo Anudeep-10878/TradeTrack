@@ -1,4 +1,3 @@
-// Smooth scrolling for navigation links
 document.addEventListener('DOMContentLoaded', () => {
     // Get all links that have a hash
     const links = document.querySelectorAll('a[href^="#"]');
@@ -308,10 +307,6 @@ function updateDashboardMetrics(metrics = null) {
         // Update performance summary
         updatePerformanceSummary(sanitizedMetrics);
 
-        // Update recent trades list if trades are provided
-        if (sanitizedMetrics.trades) {
-            updateRecentTrades(sanitizedMetrics.trades);
-        }
     } catch (error) {
         console.error('Error updating dashboard metrics:', error);
         showNotification('Error updating dashboard. Please refresh the page.', 'error');
