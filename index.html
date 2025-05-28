@@ -11,12 +11,34 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
     <script>
-        // Check if user is already logged in
+        // Check if user is already logged in and libraries are loaded
         document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is already logged in
             const user = localStorage.getItem('user');
             if (user) {
                 window.location.replace('dashboard.html');
+                return;
             }
+
+            // Ensure Google Sign-In library is loaded
+            let checkGoogleLibrary = setInterval(function() {
+                if (window.google && window.google.accounts && window.google.accounts.id) {
+                    clearInterval(checkGoogleLibrary);
+                    console.log('Google Sign-In library loaded successfully');
+                } else {
+                    console.log('Waiting for Google Sign-In library to load...');
+                }
+            }, 100);
+
+            // Ensure JWT decode library is loaded
+            let checkJwtLibrary = setInterval(function() {
+                if (window.jwt_decode) {
+                    clearInterval(checkJwtLibrary);
+                    console.log('JWT decode library loaded successfully');
+                } else {
+                    console.log('Waiting for JWT decode library to load...');
+                }
+            }, 100);
         });
     </script>
 </head>

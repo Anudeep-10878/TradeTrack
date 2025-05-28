@@ -105,42 +105,57 @@ function updateUserProfile() {
 
 // Function to decode JWT token
 function decodeJwtResponse(token) {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    return JSON.parse(jsonPayload);
+    if (!window.jwt_decode) {
+        throw new Error('JWT decode library not loaded');
+    }
+    try {
+        return window.jwt_decode(token);
+    } catch (error) {
+        console.error('Error decoding JWT:', error);
+        throw error;
+    }
 }
 
 // Google OAuth Configuration
 function handleCredentialResponse(response) {
-    console.log('Google Sign-In response received');
+    console.log('Google Sign-In response received:', response);
+    
+    if (!response || !response.credential) {
+        console.error('Invalid response from Google Sign-In');
+        alert('Sign in failed. Please try again.');
+        return;
+    }
+
     try {
         const credential = response.credential;
-        console.log('Decoding JWT token');
-        const decoded = jwt_decode(credential);
+        console.log('Attempting to decode JWT token');
+        const decoded = decodeJwtResponse(credential);
         console.log('Successfully decoded token:', decoded);
+        
+        if (!decoded.email) {
+            throw new Error('No email found in decoded token');
+        }
         
         // Save user data to localStorage
         localStorage.setItem('user', JSON.stringify(decoded));
         console.log('User data saved to localStorage');
         
-        // Save user data to server first
+        // Save user data to server
         saveUserToDatabase(decoded)
             .then(() => {
-                // Only redirect after successful server save
-                console.log('Redirecting to dashboard...');
+                console.log('User saved to database, redirecting to dashboard...');
                 window.location.href = 'dashboard.html';
             })
             .catch(error => {
                 console.error('Error saving to server:', error);
                 // Still redirect even if server save fails
                 console.log('Redirecting to dashboard despite server error...');
-                window.location.href = 'dashboard.html';
+                window.location.replace('dashboard.html');
             });
     } catch (error) {
         console.error('Error in handleCredentialResponse:', error);
+        // Clear any potentially corrupted data
+        localStorage.removeItem('user');
         alert('An error occurred during sign in. Please try again.');
     }
 }
