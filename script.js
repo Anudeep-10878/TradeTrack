@@ -224,6 +224,7 @@ function getDefaultMetrics() {
         total_profit_loss: 0,
         total_trades: 0,
         winning_trades: 0,
+        losing_trades: 0,
         win_rate: 0,
         average_return: 0,
         best_trade: 0,
@@ -242,7 +243,7 @@ function sanitizeMetrics(metrics) {
     
     // Ensure all metrics exist and are numbers
     Object.keys(defaultMetrics).forEach(key => {
-        if (metrics[key] === null || metrics[key] === undefined || isNaN(metrics[key])) {
+        if (metrics[key] === null || metrics[key] === undefined || isNaN(Number(metrics[key]))) {
             sanitized[key] = defaultMetrics[key];
         } else {
             sanitized[key] = Number(metrics[key]);
@@ -893,10 +894,7 @@ document.addEventListener('DOMContentLoaded', function() {
             showNotification('Trade saved successfully!', 'success');
             
             // Close the modal
-            const nakedPositionModal = document.getElementById('nakedPositionModal');
-            if (nakedPositionModal) {
-                nakedPositionModal.style.display = 'none';
-            }
+            hideNakedPositionModal();
 
             return true;
         } catch (error) {
