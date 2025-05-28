@@ -25,30 +25,43 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Modal handling
-const modal = document.getElementById('loginModal');
-const closeModal = document.querySelector('.close-modal');
-const ctaButtons = document.querySelectorAll('.cta-button, .get-started-btn');
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('loginModal');
+    const closeModal = document.querySelector('#loginModal .close-modal');
+    const ctaButtons = document.querySelectorAll('.cta-button, .get-started-btn');
 
-// Open modal when CTA buttons are clicked
-ctaButtons.forEach(button => {
-    button.addEventListener('click', (e) => {
-        e.preventDefault();
-        modal.classList.add('show');
-        document.body.style.overflow = 'hidden'; // Prevent scrolling
-    });
-});
+    if (modal && closeModal && ctaButtons) {
+        // Open modal when CTA buttons are clicked
+        ctaButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                modal.style.display = 'flex';
+                setTimeout(() => {
+                    modal.classList.add('show');
+                }, 10);
+                document.body.style.overflow = 'hidden'; // Prevent scrolling
+            });
+        });
 
-// Close modal when clicking the close button
-closeModal.addEventListener('click', () => {
-    modal.classList.remove('show');
-    document.body.style.overflow = ''; // Restore scrolling
-});
+        // Close modal when clicking the close button
+        closeModal.addEventListener('click', () => {
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+            document.body.style.overflow = ''; // Restore scrolling
+        });
 
-// Close modal when clicking outside
-window.addEventListener('click', (e) => {
-    if (e.target === modal) {
-        modal.classList.remove('show');
-        document.body.style.overflow = ''; // Restore scrolling
+        // Close modal when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 300);
+                document.body.style.overflow = ''; // Restore scrolling
+            }
+        });
     }
 });
 
