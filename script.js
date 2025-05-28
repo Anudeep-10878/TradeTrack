@@ -419,7 +419,7 @@ const settingsLink = document.querySelector('a[href="#"][i.className*="fa-cog"]'
 const closeSettingsModal = settingsModal.querySelector('.close-modal');
 const saveSettingsBtn = settingsModal.querySelector('.save-settings-btn');
 
-// Open settings modal
+// Open settings modal with corrected display style
 settingsLink.addEventListener('click', (e) => {
     e.preventDefault();
     const user = JSON.parse(localStorage.getItem('user'));
@@ -438,18 +438,25 @@ settingsLink.addEventListener('click', (e) => {
             })
             .catch(error => console.error('Error fetching user settings:', error));
     }
-    settingsModal.style.display = 'block';
+    settingsModal.style.display = 'flex'; // Changed to flex
+    settingsModal.classList.add('show'); // Add show class for animation
 });
 
-// Close settings modal
+// Close settings modal with animation
 closeSettingsModal.addEventListener('click', () => {
-    settingsModal.style.display = 'none';
+    settingsModal.classList.remove('show');
+    setTimeout(() => {
+        settingsModal.style.display = 'none';
+    }, 300); // Match this with the CSS transition duration
 });
 
 // Close modal when clicking outside
 window.addEventListener('click', (e) => {
     if (e.target === settingsModal) {
-        settingsModal.style.display = 'none';
+        settingsModal.classList.remove('show');
+        setTimeout(() => {
+            settingsModal.style.display = 'none';
+        }, 300); // Match this with the CSS transition duration
     }
 });
 
