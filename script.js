@@ -77,8 +77,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Function to update user profile in dashboard
 function updateUserProfile() {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (user) {
+    try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user) {
+            throw new Error('No user data found');
+        }
+
         const username = document.querySelector('.username');
         const profilePic = document.querySelector('.profile-pic');
         
@@ -93,13 +97,13 @@ function updateUserProfile() {
                 profilePic.alt = displayName;
             }
             
-            // Log the update for debugging
             console.log('Updated profile:', { name: displayName, picture: user.picture });
         } else {
-            console.error('Profile elements not found in DOM');
+            console.warn('Profile elements not found in DOM');
         }
-    } else {
-        console.error('No user data found in localStorage');
+    } catch (error) {
+        console.error('Error updating user profile:', error);
+        // Don't throw error, just log it
     }
 }
 
@@ -240,19 +244,34 @@ function checkAuth() {
     if (!user) {
         // If no user and we're not already on the index page, redirect to index
         if (currentPage !== 'index.html') {
+            console.log('No user found, redirecting to login page');
             window.location.replace('index.html');
         }
         return false;
-    } else {
+    }
+
+    try {
+        // Parse user data to verify it's valid JSON
+        const userData = JSON.parse(user);
+        if (!userData.email) {
+            console.error('Invalid user data found');
+            localStorage.removeItem('user');
+            if (currentPage !== 'index.html') {
+                window.location.replace('index.html');
+            }
+            return false;
+        }
+
         // If user exists and we're on index page, redirect to dashboard
         if (currentPage === 'index.html') {
+            console.log('User already logged in, redirecting to dashboard');
             window.location.replace('dashboard.html');
             return false;
         }
         
         // Update dashboard if we're on the dashboard page
         if (currentPage === 'dashboard.html') {
-            const userData = JSON.parse(user);
+            console.log('Updating dashboard with user data');
             
             // First update UI with local data
             updateUserProfile();
@@ -263,17 +282,25 @@ function checkAuth() {
                     if (updatedUser) {
                         localStorage.setItem('user', JSON.stringify(updatedUser));
                         updateDashboardMetrics(updatedUser);
-                        updateRecentTrades(updatedUser.trades);
-                        updateUserProfile();
+                        if (updatedUser.trades) {
+                            updateRecentTrades(updatedUser.trades);
+                        }
                     }
                 })
                 .catch(error => {
-                    console.error('Error fetching user data:', error);
+                    console.warn('Error fetching user data from server:', error);
                     // Don't logout on server error, just show what we have
                 });
         }
         
         return true;
+    } catch (error) {
+        console.error('Error parsing user data:', error);
+        localStorage.removeItem('user');
+        if (currentPage !== 'index.html') {
+            window.location.replace('index.html');
+        }
+        return false;
     }
 }
 

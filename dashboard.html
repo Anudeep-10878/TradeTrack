@@ -208,27 +208,39 @@
     <script>
         // Initialize dashboard when DOM loads
         document.addEventListener('DOMContentLoaded', async function() {
+            console.log('Dashboard initialization started');
             const user = localStorage.getItem('user');
-            if (user) {
-                try {
-                    // First update the user profile
-                    updateUserProfile();
-                    
-                    // Show the dashboard content immediately
-                    document.querySelector('.dashboard-content').classList.add('loaded');
-                    
-                    // Try to fetch updated data from server
-                    try {
-                        await checkAuth();
-                    } catch (serverError) {
-                        console.warn('Could not connect to server, using local data:', serverError);
-                        // Continue showing dashboard with local data
-                    }
-                } catch (error) {
-                    console.error('Error initializing dashboard:', error);
-                    handleLogout();
+            
+            if (!user) {
+                console.log('No user found, redirecting to login');
+                window.location.replace('index.html');
+                return;
+            }
+
+            try {
+                // Parse user data to verify it's valid
+                const userData = JSON.parse(user);
+                if (!userData.email) {
+                    throw new Error('Invalid user data');
                 }
-            } else {
+
+                // First update the user profile
+                updateUserProfile();
+                
+                // Try to fetch updated data from server
+                try {
+                    const isAuthenticated = await checkAuth();
+                    if (!isAuthenticated) {
+                        throw new Error('Authentication check failed');
+                    }
+                    console.log('Dashboard initialized successfully');
+                } catch (serverError) {
+                    console.warn('Could not connect to server, using local data:', serverError);
+                    // Continue showing dashboard with local data
+                }
+            } catch (error) {
+                console.error('Error initializing dashboard:', error);
+                localStorage.removeItem('user');
                 window.location.replace('index.html');
             }
         });
