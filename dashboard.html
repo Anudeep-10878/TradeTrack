@@ -19,7 +19,8 @@
             <img src="logo.png" alt="TradeTrack Logo">
         </div>
         <div class="nav-links">
-            <a href="#" class="active"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a href="#" class="active" data-view="dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a href="#" data-view="library"><i class="fas fa-book-open"></i> Library</a>
             <a href="#"><i class="fas fa-book"></i> Journal</a>
             <a href="#"><i class="fas fa-chart-pie"></i> Analytics</a>
             <a href="#"><i class="fas fa-cog"></i> Settings</a>
@@ -34,98 +35,125 @@
     </nav>
 
     <main class="dashboard-main">
-        <header class="dashboard-header">
-            <h1>Trading Dashboard</h1>
-            <button class="add-trade-btn">
-                <!-- <i class="fas fa-plus"></i> -->
-                Add Trade
-            </button>
-        </header>
+        <div id="dashboard-view">
+            <header class="dashboard-header">
+                <h1>Trading Dashboard</h1>
+                <button class="add-trade-btn">
+                    Add Trade
+                </button>
+            </header>
 
-        <div class="dashboard-container">
-            <div class="main-metrics">
-                <div class="metric-card profit">
-                    <div class="metric-icon">
-                        <i class="fas fa-chart-line"></i>
+            <div class="dashboard-container">
+                <div class="main-metrics">
+                    <div class="metric-card profit">
+                        <div class="metric-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3>Total Profit/Loss</h3>
+                            <p class="value">₹0.00</p>
+                            <p class="change">0.0% <span>vs last period</span></p>
+                        </div>
                     </div>
-                    <div class="metric-content">
-                        <h3>Total Profit/Loss</h3>
-                        <p class="value">₹0.00</p>
-                        <p class="change">0.0% <span>vs last period</span></p>
+                    <div class="metric-card trades">
+                        <div class="metric-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3>Total Trades</h3>
+                            <p class="value">0</p>
+                            <p class="change">No trades today</p>
+                        </div>
+                    </div>
+                    <div class="metric-card win-rate">
+                        <div class="metric-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3>Win Rate</h3>
+                            <p class="value">0%</p>
+                            <p class="change">0.0% <span>vs last period</span></p>
+                        </div>
+                    </div>
+                    <div class="metric-card avg-return">
+                        <div class="metric-icon">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3>Average Return</h3>
+                            <p class="value">₹0.00</p>
+                            <p class="change">0.0% <span>vs last period</span></p>
+                        </div>
                     </div>
                 </div>
-                <div class="metric-card trades">
-                    <div class="metric-icon">
-                        <i class="fas fa-exchange-alt"></i>
+
+                <div class="content-grid">
+                    <div class="recent-trades">
+                        <h2>Recent Trades</h2>
+                        <div class="trades-list">
+                            <div class="no-trades-message">
+                                <p>No trades recorded yet. Click "Add Trade" to get started.</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="metric-content">
-                        <h3>Total Trades</h3>
-                        <p class="value">0</p>
-                        <p class="change">No trades today</p>
+
+                    <div class="risk-metrics">
+                        <h2>Risk Metrics</h2>
+                        <div class="metrics-grid">
+                            <div class="metric-item">
+                                <h4>Profit Factor</h4>
+                                <p>0.00</p>
+                            </div>
+                            <div class="metric-item">
+                                <h4>Risk/Reward</h4>
+                                <p>0:0</p>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="metric-card win-rate">
-                    <div class="metric-icon">
-                        <i class="fas fa-trophy"></i>
-                    </div>
-                    <div class="metric-content">
-                        <h3>Win Rate</h3>
-                        <p class="value">0%</p>
-                        <p class="change">0.0% <span>vs last period</span></p>
-                    </div>
-                </div>
-                <div class="metric-card avg-return">
-                    <div class="metric-icon">
-                        <i class="fas fa-coins"></i>
-                    </div>
-                    <div class="metric-content">
-                        <h3>Average Return</h3>
-                        <p class="value">₹0.00</p>
-                        <p class="change">0.0% <span>vs last period</span></p>
+
+                    <div class="performance-summary">
+                        <h2>Performance Summary</h2>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <h4>Monthly P&L</h4>
+                                <p>₹0.00</p>
+                            </div>
+                            <div class="summary-item">
+                                <h4>Best Trade</h4>
+                                <p>₹0.00</p>
+                            </div>
+                            <div class="summary-item">
+                                <h4>Win Streak</h4>
+                                <p>0 trades</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="content-grid">
-                <div class="recent-trades">
-                    <h2>Recent Trades</h2>
-                    <div class="trades-list">
-                        <div class="no-trades-message">
-                            <p>No trades recorded yet. Click "Add Trade" to get started.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="risk-metrics">
-                    <h2>Risk Metrics</h2>
-                    <div class="metrics-grid">
-                        <div class="metric-item">
-                            <h4>Profit Factor</h4>
-                            <p>0.00</p>
-                        </div>
-                        <div class="metric-item">
-                            <h4>Risk/Reward</h4>
-                            <p>0:0</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="performance-summary">
-                    <h2>Performance Summary</h2>
-                    <div class="summary-grid">
-                        <div class="summary-item">
-                            <h4>Monthly P&L</h4>
-                            <p>₹0.00</p>
-                        </div>
-                        <div class="summary-item">
-                            <h4>Best Trade</h4>
-                            <p>₹0.00</p>
-                        </div>
-                        <div class="summary-item">
-                            <h4>Win Streak</h4>
-                            <p>0 trades</p>
-                        </div>
-                    </div>
+        <div id="library-view" style="display: none;">
+            <header class="dashboard-header">
+                <h1>Trade Library</h1>
+            </header>
+            <div class="library-container">
+                <div class="trades-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Trade Date</th>
+                                <th>Trade Name</th>
+                                <th>Quantity</th>
+                                <th>Entry Price</th>
+                                <th>Exit Price</th>
+                                <th>P/L</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="library-trades">
+                            <!-- Trades will be populated here -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -166,6 +194,38 @@
                 </div>
                 <button type="button" class="save-settings-btn">Save Changes</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Edit Trade Modal -->
+    <div id="editTradeModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Edit Trade</h2>
+            <form id="editTradeForm">
+                <input type="hidden" id="editTradeId">
+                <div class="form-group">
+                    <label for="editTradeName">Trade Name</label>
+                    <input type="text" id="editTradeName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editTradeDate">Trade Date</label>
+                    <input type="date" id="editTradeDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="editQuantity">Quantity</label>
+                    <input type="number" id="editQuantity" required>
+                </div>
+                <div class="form-group">
+                    <label for="editEntryPrice">Entry Price</label>
+                    <input type="number" id="editEntryPrice" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="editExitPrice">Exit Price</label>
+                    <input type="number" id="editExitPrice" step="0.01" required>
+                </div>
+                <button type="submit" class="save-trade-btn">Save Changes</button>
+            </form>
         </div>
     </div>
 

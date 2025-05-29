@@ -1984,4 +1984,80 @@ footer {
     background-color: #f44336;
     border: 1px solid #e53935;
     box-shadow: 0 4px 12px rgba(244, 67, 54, 0.2);
+}
+
+.library-container {
+    padding: 20px;
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    margin: 20px;
+}
+
+.trades-table {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.trades-table table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.trades-table th,
+.trades-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.trades-table th {
+    background: var(--accent-color);
+    color: white;
+    font-weight: 600;
+}
+
+.trades-table tr:hover {
+    background: var(--hover-color);
+}
+
+.trade-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.edit-trade-btn,
+.delete-trade-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.edit-trade-btn {
+    background: var(--accent-color);
+    color: white;
+}
+
+.delete-trade-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.edit-trade-btn:hover {
+    background: var(--accent-hover);
+}
+
+.delete-trade-btn:hover {
+    background: #c82333;
+}
+
+/* Active nav link styles */
+.nav-links a.active {
+    background: var(--accent-color);
+    color: white;
 } 

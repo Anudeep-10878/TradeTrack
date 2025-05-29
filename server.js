@@ -456,6 +456,104 @@ app.put('/api/user/:email/settings', checkDbConnection, async (req, res) => {
     }
 });
 
+// Authentication middleware
+const authenticateUser = async (req, res, next) => {
+    try {
+        const email = req.params.email;
+        if (!email) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+
+        const user = await db.collection('users').findOne({ email });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        req.user = user;
+        next();
+    } catch (error) {
+        console.error('Authentication error:', error);
+        res.status(500).json({ error: 'Authentication failed' });
+    }
+};
+
+// Trade Management Routes
+app.get('/api/trades/:email', authenticateUser, async (req, res) => {
+    try {
+        const trades = req.user.trades || [];
+        res.json(trades);
+    } catch (error) {
+        console.error('Error fetching trades:', error);
+        res.status(500).json({ error: 'Failed to fetch trades' });
+    }
+});
+
+app.get('/api/trade/:email/:id', authenticateUser, async (req, res) => {
+    try {
+        const trade = req.user.trades.find(t => t._id.toString() === req.params.id);
+        if (!trade) {
+            return res.status(404).json({ error: 'Trade not found' });
+        }
+        res.json(trade);
+    } catch (error) {
+        console.error('Error fetching trade:', error);
+        res.status(500).json({ error: 'Failed to fetch trade' });
+    }
+});
+
+app.put('/api/trade/:email/:id', authenticateUser, async (req, res) => {
+    try {
+        const { name, date, quantity, entryPrice, exitPrice } = req.body;
+        const trades = req.user.trades || [];
+        const tradeIndex = trades.findIndex(t => t._id.toString() === req.params.id);
+        
+        if (tradeIndex === -1) {
+            return res.status(404).json({ error: 'Trade not found' });
+        }
+        
+        trades[tradeIndex] = {
+            ...trades[tradeIndex],
+            name,
+            date,
+            quantity,
+            entryPrice,
+            exitPrice,
+            updatedAt: new Date()
+        };
+        
+        await db.collection('users').updateOne(
+            { email: req.params.email },
+            { $set: { trades: trades } }
+        );
+        
+        res.json({ message: 'Trade updated successfully', trade: trades[tradeIndex] });
+    } catch (error) {
+        console.error('Error updating trade:', error);
+        res.status(500).json({ error: 'Failed to update trade' });
+    }
+});
+
+app.delete('/api/trade/:email/:id', authenticateUser, async (req, res) => {
+    try {
+        const trades = req.user.trades || [];
+        const updatedTrades = trades.filter(t => t._id.toString() !== req.params.id);
+        
+        if (trades.length === updatedTrades.length) {
+            return res.status(404).json({ error: 'Trade not found' });
+        }
+        
+        await db.collection('users').updateOne(
+            { email: req.params.email },
+            { $set: { trades: updatedTrades } }
+        );
+        
+        res.json({ message: 'Trade deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting trade:', error);
+        res.status(500).json({ error: 'Failed to delete trade' });
+    }
+});
+
 // Start server and connect to MongoDB
 const PORT = process.env.PORT || 3000;
 
