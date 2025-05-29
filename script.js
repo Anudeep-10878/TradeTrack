@@ -214,12 +214,26 @@ async function getUserData(email) {
         console.log('Fetching user data for:', email);
         console.log('API URL:', API_URL);
         
+        // First check if server is reachable
+        try {
+            const statusResponse = await fetch(`${API_URL}/status`);
+            if (!statusResponse.ok) {
+                throw new Error('Server is not responding');
+            }
+            const statusData = await statusResponse.json();
+            console.log('Server status:', statusData);
+        } catch (statusError) {
+            console.error('Server status check failed:', statusError);
+            throw new Error('Cannot connect to server');
+        }
+        
         const response = await fetch(`${API_URL}/api/user/${email}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
-            }
+            },
+            mode: 'cors'
         });
 
         console.log('Response status:', response.status);
@@ -1089,9 +1103,9 @@ function checkAuth() {
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
     
     if (!user) {
-        // If no user and we're not already on the index page, redirect to index
+        console.log('No user data found in localStorage');
         if (currentPage !== 'index.html') {
-            console.log('No user found, redirecting to login page');
+            console.log('Redirecting to login page');
             window.location.replace('index.html');
         }
         return false;
@@ -1103,7 +1117,7 @@ function checkAuth() {
         console.log('Parsed user data:', userData);
 
         if (!userData.email) {
-            console.error('Invalid user data found - no email');
+            console.error('Invalid user data - no email found');
             localStorage.removeItem('user');
             if (currentPage !== 'index.html') {
                 window.location.replace('index.html');
@@ -1139,7 +1153,7 @@ function checkAuth() {
                 })
                 .catch(error => {
                     console.error('Error fetching user data from server:', error);
-                    showNotification('Could not fetch latest data from server. Showing cached data.', 'warning');
+                    showNotification('Could not fetch latest data from server. Please check your internet connection and try again.', 'error');
                 });
         }
         
