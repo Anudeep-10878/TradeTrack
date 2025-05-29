@@ -7,12 +7,31 @@ const mongoose = require('mongoose');
 const app = express();
 
 // CORS configuration
+const allowedOrigins = [
+    'https://tradetrack-journal.netlify.app',
+    'http://localhost:3000',
+    'http://localhost:5500',
+    'http://127.0.0.1:5500',
+    'http://127.0.0.1:3000',
+    'https://tradetrack-58el.onrender.com'
+];
+
 app.use(cors({
-    origin: ['https://tradetrack-journal.netlify.app', 'http://localhost:3000', 'https://tradetrack-58el.onrender.com'],
+    origin: function(origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) === -1) {
+            console.log('Blocked origin:', origin);
+            return callback(null, false);
+        }
+        console.log('Allowed origin:', origin);
+        return callback(null, true);
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     exposedHeaders: ['Content-Type', 'Authorization'],
-    credentials: false,
+    credentials: true,
     preflightContinue: false,
     optionsSuccessStatus: 204,
     maxAge: 86400
@@ -23,9 +42,13 @@ app.options('*', cors());
 
 // Add CORS headers middleware
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.header('Access-Control-Allow-Origin', origin);
+    }
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+    res.header('Access-Control-Allow-Credentials', 'true');
     next();
 });
 
