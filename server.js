@@ -10,11 +10,14 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-    origin: true, // Allow all origins
+    origin: ['https://tradetrack-journal.netlify.app', 'http://localhost:3000'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-    maxAge: 86400 // Cache preflight request for 24 hours
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    exposedHeaders: ['Content-Type', 'Authorization'],
+    credentials: false,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+    maxAge: 86400
 }));
 
 // Add OPTIONS handling for preflight requests
