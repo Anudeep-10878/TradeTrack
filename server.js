@@ -62,7 +62,12 @@ app.use(express.static('public'));
 
 // Health check endpoint - respond immediately without waiting for DB
 app.get('/', (req, res) => {
-    res.json({ status: 'ok', message: 'Server is running' });
+    res.json({ 
+        status: 'ok', 
+        message: 'Server is running',
+        environment: process.env.NODE_ENV,
+        timestamp: new Date().toISOString()
+    });
 });
 
 // MongoDB connection status
@@ -99,28 +104,40 @@ const options = {
     w: 'majority'
 };
 
-// Connect to MongoDB with retry logic
+// Connect to MongoDB with enhanced retry logic
 async function connectToMongo() {
     let retryCount = 0;
     const maxRetries = 5;
-    
+    const retryDelay = 5000; // 5 seconds
+
     while (retryCount < maxRetries) {
         try {
             console.log(`Attempting to connect to MongoDB (attempt ${retryCount + 1} of ${maxRetries})...`);
+            console.log('Node.js version:', process.version);
+            console.log('MongoDB driver version:', require('mongodb/package.json').version);
             
             // Close existing connection if any
             if (mongoClient) {
+                console.log('Closing existing connection...');
                 await mongoClient.close();
                 mongoClient = null;
             }
             
             // Create new client with minimal options
             mongoClient = new MongoClient(uri, {
-                useNewUrlParser: true,
-                useUnifiedTopology: true
+                serverApi: {
+                    version: ServerApiVersion.v1,
+                    strict: true,
+                    deprecationErrors: true,
+                },
+                maxPoolSize: 10,
+                serverSelectionTimeoutMS: 10000,
+                socketTimeoutMS: 45000,
+                connectTimeoutMS: 30000
             });
             
             // Connect with timeout
+            console.log('Initiating connection...');
             await Promise.race([
                 mongoClient.connect(),
                 new Promise((_, reject) => 
@@ -132,18 +149,22 @@ async function connectToMongo() {
             
             // Get database instance
             db = mongoClient.db();
-            console.log("Selected database!");
+            const dbName = db.databaseName;
+            console.log(`Selected database: ${dbName}`);
             
-            // Test the connection
+            // Test the connection with ping
             await db.command({ ping: 1 });
             console.log("Pinged your deployment. You successfully connected to MongoDB!");
+            
+            // Try to list collections to verify permissions
+            const collections = await db.listCollections().toArray();
+            console.log(`Found ${collections.length} collections in database ${dbName}`);
             
             // Add event listeners for connection issues
             mongoClient.on('serverClosed', () => {
                 console.log('MongoDB server connection closed');
                 isConnected = false;
-                // Attempt to reconnect
-                setTimeout(() => connectToMongo(), 5000);
+                setTimeout(() => connectToMongo(), retryDelay);
             });
 
             mongoClient.on('error', (err) => {
@@ -157,14 +178,22 @@ async function connectToMongo() {
             console.error(`Error connecting to MongoDB (attempt ${retryCount + 1}):`, {
                 name: err.name,
                 message: err.message,
-                stack: err.stack,
-                code: err.code
+                code: err.code,
+                stack: err.stack
             });
+            
+            if (err.message.includes('bad auth')) {
+                console.error('Authentication failed. Please check your MongoDB username and password.');
+                console.error('Ensure MONGODB_URI environment variable is correctly set in Render.');
+            } else if (err.message.includes('connection timed out')) {
+                console.error('Connection timed out. Please check MongoDB Atlas Network Access settings.');
+                console.error('Ensure IP 0.0.0.0/0 is whitelisted in MongoDB Atlas.');
+            }
             
             retryCount++;
             if (retryCount < maxRetries) {
-                console.log(`Retrying in 5 seconds...`);
-                await new Promise(resolve => setTimeout(resolve, 5000));
+                console.log(`Retrying in ${retryDelay/1000} seconds...`);
+                await new Promise(resolve => setTimeout(resolve, retryDelay));
             } else {
                 console.error('Max retry attempts reached. Could not connect to MongoDB.');
                 isConnected = false;
