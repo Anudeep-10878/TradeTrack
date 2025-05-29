@@ -1235,31 +1235,41 @@ async function loadLibraryTrades() {
 
 function displayLibraryTrades(trades) {
     const tbody = document.getElementById('library-trades');
+    if (!tbody) return;
+
     tbody.innerHTML = '';
+    
+    if (!trades || trades.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="no-trades">No trades recorded yet.</td>
+            </tr>
+        `;
+        return;
+    }
 
     trades.forEach(trade => {
-        const tr = document.createElement('tr');
-        const date = new Date(trade.date).toLocaleDateString();
-        const pl = calculatePL(trade.entryPrice, trade.exitPrice, trade.quantity);
+        const row = document.createElement('tr');
+        const profitLoss = calculatePL(trade.entryPrice, trade.exitPrice, trade.quantity);
+        const isProfit = profitLoss >= 0;
         
-        tr.innerHTML = `
-            <td>${date}</td>
+        row.innerHTML = `
+            <td>${new Date(trade.date).toLocaleDateString()}</td>
             <td>${trade.name}</td>
             <td>${trade.quantity}</td>
-            <td>₹${trade.entryPrice}</td>
-            <td>₹${trade.exitPrice}</td>
-            <td class="${pl >= 0 ? 'profit' : 'loss'}">₹${pl.toFixed(2)}</td>
-            <td class="trade-actions">
-                <button class="edit-trade-btn" onclick="editTrade('${trade._id}')">
+            <td>₹${parseFloat(trade.entryPrice).toFixed(2)}</td>
+            <td>₹${parseFloat(trade.exitPrice).toFixed(2)}</td>
+            <td class="${isProfit ? 'profit' : 'loss'}">₹${Math.abs(profitLoss).toFixed(2)}</td>
+            <td>
+                <button onclick="editTrade('${trade._id}')" class="edit-btn">
                     <i class="fas fa-edit"></i> Edit
                 </button>
-                <button class="delete-trade-btn" onclick="deleteTrade('${trade._id}')">
+                <button onclick="deleteTrade('${trade._id}')" class="delete-btn">
                     <i class="fas fa-trash"></i> Delete
                 </button>
             </td>
         `;
-        
-        tbody.appendChild(tr);
+        tbody.appendChild(row);
     });
 }
 
@@ -1274,29 +1284,35 @@ async function editTrade(tradeId) {
             throw new Error('User not authenticated');
         }
 
+        // Fetch trade data
         const response = await fetch(`${API_URL}/api/trade/${user.email}/${tradeId}`);
-        if (!response.ok) throw new Error('Failed to fetch trade');
-        
+        if (!response.ok) {
+            throw new Error('Failed to fetch trade data');
+        }
+
         const trade = await response.json();
         
-        // Populate edit modal
+        // Populate modal with trade data
         document.getElementById('editTradeId').value = trade._id;
         document.getElementById('editTradeName').value = trade.name;
         document.getElementById('editTradeDate').value = trade.date.split('T')[0];
         document.getElementById('editQuantity').value = trade.quantity;
         document.getElementById('editEntryPrice').value = trade.entryPrice;
         document.getElementById('editExitPrice').value = trade.exitPrice;
-        
+
         // Show modal
-        document.getElementById('editTradeModal').style.display = 'block';
+        const modal = document.getElementById('editTradeModal');
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('show'), 10);
+
     } catch (error) {
-        console.error('Error fetching trade:', error);
-        showNotification('Failed to load trade details', 'error');
+        console.error('Error in editTrade:', error);
+        showNotification('Failed to load trade data', 'error');
     }
 }
 
-// Edit Trade Form Submit Handler
-document.getElementById('editTradeForm').addEventListener('submit', async (e) => {
+// Handle edit trade form submission
+document.getElementById('editTradeForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     try {
@@ -1313,21 +1329,28 @@ document.getElementById('editTradeForm').addEventListener('submit', async (e) =>
             entryPrice: parseFloat(document.getElementById('editEntryPrice').value),
             exitPrice: parseFloat(document.getElementById('editExitPrice').value)
         };
-        
+
         const response = await fetch(`${API_URL}/api/trade/${user.email}/${tradeId}`, {
             method: 'PUT',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify(tradeData)
         });
-        
-        if (!response.ok) throw new Error('Failed to update trade');
-        
-        document.getElementById('editTradeModal').style.display = 'none';
-        showNotification('Trade updated successfully', 'success');
-        loadLibraryTrades();
-        updateDashboardMetrics(); // Refresh dashboard data
+
+        if (!response.ok) {
+            throw new Error('Failed to update trade');
+        }
+
+        // Close modal
+        const modal = document.getElementById('editTradeModal');
+        modal.classList.remove('show');
+        setTimeout(() => modal.style.display = 'none', 300);
+
+        // Refresh trades display
+        await loadLibraryTrades();
+        showNotification('Trade updated successfully');
+
     } catch (error) {
         console.error('Error updating trade:', error);
         showNotification('Failed to update trade', 'error');
@@ -1335,8 +1358,10 @@ document.getElementById('editTradeForm').addEventListener('submit', async (e) =>
 });
 
 async function deleteTrade(tradeId) {
-    if (!confirm('Are you sure you want to delete this trade?')) return;
-    
+    if (!confirm('Are you sure you want to delete this trade?')) {
+        return;
+    }
+
     try {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || !user.email) {
@@ -1346,27 +1371,34 @@ async function deleteTrade(tradeId) {
         const response = await fetch(`${API_URL}/api/trade/${user.email}/${tradeId}`, {
             method: 'DELETE'
         });
-        
-        if (!response.ok) throw new Error('Failed to delete trade');
-        
-        showNotification('Trade deleted successfully', 'success');
-        loadLibraryTrades();
-        updateDashboardMetrics(); // Refresh dashboard data
+
+        if (!response.ok) {
+            throw new Error('Failed to delete trade');
+        }
+
+        // Refresh trades display
+        await loadLibraryTrades();
+        showNotification('Trade deleted successfully');
+
     } catch (error) {
         console.error('Error deleting trade:', error);
         showNotification('Failed to delete trade', 'error');
     }
 }
 
-// Close modal when clicking on X or outside the modal
+// Close modal when clicking the close button or outside
 document.querySelectorAll('.close-modal').forEach(closeBtn => {
-    closeBtn.addEventListener('click', () => {
-        closeBtn.closest('.modal').style.display = 'none';
+    closeBtn.addEventListener('click', function() {
+        const modal = this.closest('.modal');
+        modal.classList.remove('show');
+        setTimeout(() => modal.style.display = 'none', 300);
     });
 });
 
-window.addEventListener('click', (e) => {
+// Close modal when clicking outside
+window.addEventListener('click', function(e) {
     if (e.target.classList.contains('modal')) {
-        e.target.style.display = 'none';
+        e.target.classList.remove('show');
+        setTimeout(() => e.target.style.display = 'none', 300);
     }
 }); 
