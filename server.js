@@ -83,15 +83,14 @@ if (!uri) {
 const sanitizedUri = uri.replace(/\/\/[^@]+@/, '//****:****@');
 console.log('MongoDB Connection String Format:', sanitizedUri);
 
+// Simplified connection options
 const options = {
     maxPoolSize: 10,
-    serverSelectionTimeoutMS: 30000,
-    socketTimeoutMS: 45000,
-    connectTimeoutMS: 30000,
-    tls: true,
-    tlsInsecure: true, // For Render.com environment
-    directConnection: true,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 30000,
+    family: 4,
     retryWrites: true,
+    w: 'majority',
     serverApi: {
         version: ServerApiVersion.v1,
         strict: true,
@@ -107,7 +106,6 @@ async function connectToMongo() {
     while (retryCount < maxRetries) {
         try {
             console.log(`Attempting to connect to MongoDB (attempt ${retryCount + 1} of ${maxRetries})...`);
-            console.log("Connection options:", JSON.stringify(options, null, 2));
             
             // Close existing connection if any
             if (mongoClient) {
@@ -115,7 +113,7 @@ async function connectToMongo() {
                 mongoClient = null;
             }
             
-            // Create new client
+            // Create new client with minimal options
             mongoClient = new MongoClient(uri, options);
             
             // Connect to the client
@@ -126,8 +124,8 @@ async function connectToMongo() {
             db = mongoClient.db();
             console.log("Selected database!");
             
-            // Test the connection
-            await db.command({ ping: 1 });
+            // Test the connection with increased timeout
+            await db.command({ ping: 1 }, { maxTimeMS: 15000 });
             console.log("Pinged your deployment. You successfully connected to MongoDB!");
             
             // Add event listeners for connection issues
