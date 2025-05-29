@@ -1995,15 +1995,17 @@ footer {
 
 .trades-table {
     width: 100%;
-    overflow-x: auto;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: var(--background-color);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .trades-table table {
     width: 100%;
     border-collapse: collapse;
-    background: var(--bg-primary);
-    border-radius: 8px;
-    overflow: hidden;
 }
 
 .trades-table th,
@@ -2014,92 +2016,43 @@ footer {
 }
 
 .trades-table th {
-    background: var(--accent-color);
-    color: white;
+    background-color: rgba(255, 215, 0, 0.1);
     font-weight: 600;
+    color: var(--primary-color);
+    white-space: nowrap;
 }
 
 .trades-table tr:hover {
-    background: var(--hover-color);
-}
-
-.trade-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.edit-trade-btn,
-.delete-trade-btn {
-    padding: 6px 12px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.3s;
-}
-
-.edit-trade-btn {
-    background: var(--accent-color);
-    color: white;
-}
-
-.delete-trade-btn {
-    background: #dc3545;
-    color: white;
-}
-
-.edit-trade-btn:hover {
-    background: var(--accent-hover);
-}
-
-.delete-trade-btn:hover {
-    background: #c82333;
-}
-
-/* Active nav link styles */
-.nav-links a.active {
-    background: var(--accent-color);
-    color: white;
-}
-
-/* Library Table Styles */
-.trades-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    background: #fff;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.trades-table th,
-.trades-table td {
-    padding: 12px 15px;
-    text-align: left;
-    border-bottom: 1px solid #eee;
-}
-
-.trades-table th {
-    background-color: #f8f9fa;
-    font-weight: 600;
-    color: #333;
-}
-
-.trades-table tr:hover {
-    background-color: #f5f5f5;
+    background-color: rgba(255, 255, 255, 0.03);
 }
 
 .trades-table .no-trades {
     text-align: center;
     padding: 20px;
-    color: #666;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Trade Name Styles in Library Table */
+.trade-name {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.trade-name .trade-title {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.trade-name .position-name {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
 }
 
 /* Edit and Delete Buttons */
 .edit-btn,
 .delete-btn {
-    padding: 6px 12px;
+    padding: 8px 12px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -2111,26 +2064,29 @@ footer {
 }
 
 .edit-btn {
-    background-color: #4CAF50;
-    color: white;
+    background-color: var(--primary-color);
+    color: var(--background-color);
 }
 
 .edit-btn:hover {
-    background-color: #45a049;
+    background-color: #F4C430;
+    transform: translateY(-1px);
 }
 
 .delete-btn {
-    background-color: #f44336;
-    color: white;
+    background-color: rgba(244, 67, 54, 0.1);
+    color: #f44336;
+    border: 1px solid rgba(244, 67, 54, 0.3);
 }
 
 .delete-btn:hover {
-    background-color: #da190b;
+    background-color: rgba(244, 67, 54, 0.2);
+    transform: translateY(-1px);
 }
 
 .edit-btn i,
 .delete-btn i {
-    margin-right: 4px;
+    margin-right: 6px;
 }
 
 /* Profit/Loss Colors */

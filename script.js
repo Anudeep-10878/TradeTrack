@@ -1289,17 +1289,26 @@ async function editTrade(tradeId) {
             throw new Error('User not authenticated');
         }
 
+        // Show loading state
+        showNotification('Loading trade data...', 'info');
+
         // Fetch trade data
         const response = await fetch(`${API_URL}/api/trade/${user.email}/${tradeId}`);
+        
         if (!response.ok) {
-            throw new Error('Failed to fetch trade data');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Failed to fetch trade data');
         }
 
         const trade = await response.json();
         
+        if (!trade) {
+            throw new Error('No trade data received');
+        }
+
         // Populate modal with trade data
         document.getElementById('editTradeId').value = trade._id;
-        document.getElementById('editTradeName').value = trade.name;
+        document.getElementById('editTradeName').value = trade.name || trade.positionName;
         document.getElementById('editTradeDate').value = trade.date.split('T')[0];
         document.getElementById('editQuantity').value = trade.quantity;
         document.getElementById('editEntryPrice').value = trade.entryPrice;
@@ -1312,7 +1321,7 @@ async function editTrade(tradeId) {
 
     } catch (error) {
         console.error('Error in editTrade:', error);
-        showNotification('Failed to load trade data', 'error');
+        showNotification(error.message || 'Failed to load trade data', 'error');
     }
 }
 
@@ -1329,11 +1338,15 @@ document.getElementById('editTradeForm').addEventListener('submit', async functi
         const tradeId = document.getElementById('editTradeId').value;
         const tradeData = {
             name: document.getElementById('editTradeName').value,
+            positionName: document.getElementById('editTradeName').value,
             date: document.getElementById('editTradeDate').value,
             quantity: parseInt(document.getElementById('editQuantity').value),
             entryPrice: parseFloat(document.getElementById('editEntryPrice').value),
             exitPrice: parseFloat(document.getElementById('editExitPrice').value)
         };
+
+        // Show loading state
+        showNotification('Updating trade...', 'info');
 
         const response = await fetch(`${API_URL}/api/trade/${user.email}/${tradeId}`, {
             method: 'PUT',
@@ -1344,7 +1357,8 @@ document.getElementById('editTradeForm').addEventListener('submit', async functi
         });
 
         if (!response.ok) {
-            throw new Error('Failed to update trade');
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to update trade');
         }
 
         // Close modal
@@ -1354,11 +1368,11 @@ document.getElementById('editTradeForm').addEventListener('submit', async functi
 
         // Refresh trades display
         await loadLibraryTrades();
-        showNotification('Trade updated successfully');
+        showNotification('Trade updated successfully', 'success');
 
     } catch (error) {
         console.error('Error updating trade:', error);
-        showNotification('Failed to update trade', 'error');
+        showNotification(error.message || 'Failed to update trade', 'error');
     }
 });
 
