@@ -1257,7 +1257,8 @@ function displayLibraryTrades(trades) {
             <td>${new Date(trade.date).toLocaleDateString()}</td>
             <td>
                 <div class="trade-name">
-                    <span class="trade-title">${trade.positionName}</span>
+                    <span class="trade-title">${trade.name}</span>
+                    <span class="position-name">${trade.positionName || trade.name}</span>
                 </div>
             </td>
             <td>${trade.quantity}</td>
