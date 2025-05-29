@@ -1,10 +1,8 @@
+require('dotenv').config();
 const express = require('express');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const mongoose = require('mongoose');
-
-dotenv.config();
 
 const app = express();
 
@@ -46,7 +44,13 @@ let db;
 let mongoClient = null;
 
 // MongoDB connection string parsing and configuration
-const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/tradetrack";
+const uri = process.env.MONGODB_URI;
+
+if (!uri) {
+    console.error('MONGODB_URI environment variable is not set!');
+    console.error('Please set MONGODB_URI in your environment variables or .env file');
+    process.exit(1);
+}
 
 // Log connection string format (without credentials)
 const sanitizedUri = uri.replace(/\/\/[^@]+@/, '//****:****@');
