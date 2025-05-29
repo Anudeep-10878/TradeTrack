@@ -82,14 +82,23 @@ if (!uri) {
 // Log connection string format (without credentials)
 const sanitizedUri = uri.replace(/\/\/[^@]+@/, '//****:****@');
 console.log('MongoDB Connection String Format:', sanitizedUri);
+console.log('Current environment:', process.env.NODE_ENV);
 
-// Simplified connection options
+// Environment-specific options
+const isProd = process.env.NODE_ENV === 'production';
+
 const options = {
     maxPoolSize: 10,
     serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 30000,
-    family: 4,
+    // SSL/TLS options
+    tls: true,
+    tlsAllowInvalidCertificates: !isProd,
+    tlsAllowInvalidHostnames: !isProd,
+    tlsCAFile: isProd ? undefined : false,
+    // Additional options
     retryWrites: true,
+    retryReads: true,
     w: 'majority',
     serverApi: {
         version: ServerApiVersion.v1,
@@ -106,6 +115,12 @@ async function connectToMongo() {
     while (retryCount < maxRetries) {
         try {
             console.log(`Attempting to connect to MongoDB (attempt ${retryCount + 1} of ${maxRetries})...`);
+            console.log('Using SSL/TLS options:', {
+                tls: options.tls,
+                tlsAllowInvalidCertificates: options.tlsAllowInvalidCertificates,
+                tlsAllowInvalidHostnames: options.tlsAllowInvalidHostnames,
+                tlsCAFile: options.tlsCAFile
+            });
             
             // Close existing connection if any
             if (mongoClient) {
@@ -113,19 +128,25 @@ async function connectToMongo() {
                 mongoClient = null;
             }
             
-            // Create new client with minimal options
+            // Create new client
             mongoClient = new MongoClient(uri, options);
             
-            // Connect to the client
-            await mongoClient.connect();
+            // Connect with timeout
+            await Promise.race([
+                mongoClient.connect(),
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Connection timeout')), 15000)
+                )
+            ]);
+            
             console.log("Connected to client!");
             
             // Get database instance
             db = mongoClient.db();
             console.log("Selected database!");
             
-            // Test the connection with increased timeout
-            await db.command({ ping: 1 }, { maxTimeMS: 15000 });
+            // Test the connection
+            await db.command({ ping: 1 });
             console.log("Pinged your deployment. You successfully connected to MongoDB!");
             
             // Add event listeners for connection issues
