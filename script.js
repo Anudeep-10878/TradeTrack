@@ -163,7 +163,12 @@ function handleCredentialResponse(response) {
     }
 }
 
-const API_URL = 'https://tradetrack-58el.onrender.com';  // Render.com deployed backend URL
+// API URL Configuration
+const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_URL = isDevelopment ? 'http://localhost:3000' : 'https://tradetrack-58el.onrender.com';
+
+console.log('Current environment:', isDevelopment ? 'Development' : 'Production');
+console.log('Using API URL:', API_URL);
 
 async function saveUserToDatabase(googleUser) {
     try {
@@ -173,10 +178,13 @@ async function saveUserToDatabase(googleUser) {
         try {
             const statusResponse = await fetch(`${API_URL}/status`);
             const statusData = await statusResponse.json();
+            console.log('Server status:', statusData);
+            
             if (!statusData || statusData.mongodb === 'disconnected') {
                 throw new Error('Server is not ready. Please try again in a few moments.');
             }
         } catch (statusError) {
+            console.error('Status check error:', statusError);
             throw new Error('Cannot connect to server. Please check your internet connection and try again.');
         }
         
