@@ -2036,12 +2036,17 @@ footer {
 .trade-name {
     display: flex;
     flex-direction: column;
+    gap: 4px;
 }
 
 .trade-name .trade-title {
     font-weight: 600;
     color: var(--text-color);
-    font-size: 0.95rem;
+}
+
+.trade-name .position-name {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
 }
 
 /* Edit and Delete Buttons */
@@ -2184,4 +2189,21 @@ footer {
 
 .save-trade-btn:hover {
     background-color: #45a049;
+}
+
+/* Trade Name Styles in Library Table */
+.trade-name {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.trade-name .trade-title {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.trade-name .position-name {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
 } 
