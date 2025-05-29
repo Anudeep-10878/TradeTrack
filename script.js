@@ -210,11 +210,34 @@ async function saveUserToDatabase(googleUser) {
 }
 
 async function getUserData(email) {
-    const response = await fetch(`${API_URL}/api/user/${email}`);
-    if (!response.ok) {
-        throw new Error('Failed to fetch user data');
+    try {
+        console.log('Fetching user data for:', email);
+        console.log('API URL:', API_URL);
+        
+        const response = await fetch(`${API_URL}/api/user/${email}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+
+        console.log('Response status:', response.status);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`Failed to fetch user data: ${response.status} ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('User data received:', data);
+        return data;
+    } catch (error) {
+        console.error('Error in getUserData:', error);
+        throw error;
     }
-    return response.json();
 }
 
 // Function to get default metrics
@@ -1077,8 +1100,10 @@ function checkAuth() {
     try {
         // Parse user data to verify it's valid JSON
         const userData = JSON.parse(user);
+        console.log('Parsed user data:', userData);
+
         if (!userData.email) {
-            console.error('Invalid user data found');
+            console.error('Invalid user data found - no email');
             localStorage.removeItem('user');
             if (currentPage !== 'index.html') {
                 window.location.replace('index.html');
@@ -1103,6 +1128,7 @@ function checkAuth() {
             // Then try to get updated data from server
             getUserData(userData.email)
                 .then(updatedUser => {
+                    console.log('Received updated user data:', updatedUser);
                     if (updatedUser) {
                         localStorage.setItem('user', JSON.stringify(updatedUser));
                         updateDashboardMetrics(updatedUser.metrics);
@@ -1112,14 +1138,14 @@ function checkAuth() {
                     }
                 })
                 .catch(error => {
-                    console.warn('Error fetching user data from server:', error);
-                    // Don't logout on server error, just show what we have
+                    console.error('Error fetching user data from server:', error);
+                    showNotification('Could not fetch latest data from server. Showing cached data.', 'warning');
                 });
         }
         
         return true;
     } catch (error) {
-        console.error('Error parsing user data:', error);
+        console.error('Error in checkAuth:', error);
         localStorage.removeItem('user');
         if (currentPage !== 'index.html') {
             window.location.replace('index.html');
