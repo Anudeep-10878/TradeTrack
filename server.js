@@ -10,7 +10,7 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-    origin: ['https://tradetrack-journal.netlify.app', 'http://localhost:3000'],  // Allow Netlify and localhost
+    origin: ['https://tradetrack-58el.onrender.com', 'http://localhost:3000'],  // Allow Render.com and localhost
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -27,7 +27,7 @@ app.use((req, res, next) => {
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-    res.setHeader('Access-Control-Allow-Origin', 'https://tradetrack-journal.netlify.app');
+    res.setHeader('Access-Control-Allow-Origin', 'https://tradetrack-58el.onrender.com');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     next();

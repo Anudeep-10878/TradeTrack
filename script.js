@@ -163,7 +163,7 @@ function handleCredentialResponse(response) {
     }
 }
 
-const API_URL = 'https://tradetrack-58e1.onrender.com';  // Render.com deployed backend URL
+const API_URL = 'https://tradetrack-58el.onrender.com';  // Render.com deployed backend URL
 
 async function saveUserToDatabase(googleUser) {
     try {
