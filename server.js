@@ -87,7 +87,7 @@ console.log('Current environment:', process.env.NODE_ENV);
 // Environment-specific options
 const isProd = process.env.NODE_ENV === 'production';
 
-// Simplified connection options with modern TLS settings
+// Simplified connection options
 const options = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -95,9 +95,6 @@ const options = {
     serverSelectionTimeoutMS: 10000,
     socketTimeoutMS: 45000,
     connectTimeoutMS: 30000,
-    tls: true,
-    tlsAllowInvalidCertificates: true,
-    tlsInsecure: true,
     retryWrites: true,
     w: 'majority'
 };
@@ -110,11 +107,6 @@ async function connectToMongo() {
     while (retryCount < maxRetries) {
         try {
             console.log(`Attempting to connect to MongoDB (attempt ${retryCount + 1} of ${maxRetries})...`);
-            console.log('Connection options:', {
-                tls: options.tls,
-                tlsAllowInvalidCertificates: options.tlsAllowInvalidCertificates,
-                tlsInsecure: options.tlsInsecure
-            });
             
             // Close existing connection if any
             if (mongoClient) {
@@ -122,8 +114,11 @@ async function connectToMongo() {
                 mongoClient = null;
             }
             
-            // Create new client
-            mongoClient = new MongoClient(uri, options);
+            // Create new client with minimal options
+            mongoClient = new MongoClient(uri, {
+                useNewUrlParser: true,
+                useUnifiedTopology: true
+            });
             
             // Connect with timeout
             await Promise.race([
