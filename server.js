@@ -87,24 +87,21 @@ console.log('Current environment:', process.env.NODE_ENV);
 // Environment-specific options
 const isProd = process.env.NODE_ENV === 'production';
 
+// Basic connection options
 const options = {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
     maxPoolSize: 10,
-    serverSelectionTimeoutMS: 5000,
-    socketTimeoutMS: 30000,
-    // SSL/TLS options
-    tls: true,
-    tlsAllowInvalidCertificates: !isProd,
-    tlsAllowInvalidHostnames: !isProd,
-    tlsCAFile: isProd ? undefined : false,
+    serverSelectionTimeoutMS: 10000,
+    socketTimeoutMS: 45000,
+    connectTimeoutMS: 30000,
+    // Explicit SSL configuration
+    ssl: true,
+    sslValidate: false,
+    checkServerIdentity: false,
     // Additional options
     retryWrites: true,
-    retryReads: true,
-    w: 'majority',
-    serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-    }
+    w: 'majority'
 };
 
 // Connect to MongoDB with retry logic
@@ -115,11 +112,10 @@ async function connectToMongo() {
     while (retryCount < maxRetries) {
         try {
             console.log(`Attempting to connect to MongoDB (attempt ${retryCount + 1} of ${maxRetries})...`);
-            console.log('Using SSL/TLS options:', {
-                tls: options.tls,
-                tlsAllowInvalidCertificates: options.tlsAllowInvalidCertificates,
-                tlsAllowInvalidHostnames: options.tlsAllowInvalidHostnames,
-                tlsCAFile: options.tlsCAFile
+            console.log('Connection options:', {
+                ssl: options.ssl,
+                sslValidate: options.sslValidate,
+                checkServerIdentity: options.checkServerIdentity
             });
             
             // Close existing connection if any
@@ -135,7 +131,7 @@ async function connectToMongo() {
             await Promise.race([
                 mongoClient.connect(),
                 new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Connection timeout')), 15000)
+                    setTimeout(() => reject(new Error('Connection timeout')), 30000)
                 )
             ]);
             
