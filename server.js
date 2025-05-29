@@ -347,10 +347,7 @@ app.get('/api/user/:email', checkDbConnection, async (req, res) => {
 app.post('/api/trade/:email', checkDbConnection, async (req, res) => {
     try {
         console.log('Received trade data:', req.body);
-        const tradeData = {
-            ...req.body,
-            _id: new Date().getTime().toString(), // Add a unique ID based on timestamp
-        };
+        const tradeData = req.body;
         
         // Calculate profit/loss for this trade
         const quantity = Number(tradeData.quantity) || 0;
