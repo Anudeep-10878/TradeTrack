@@ -163,7 +163,7 @@ function handleCredentialResponse(response) {
     }
 }
 
-const API_URL = 'https://tradetrack-58e1.onrender.com';  // Render.com deployed backend URL
+const API_URL = 'https://tradetrack-58el.onrender.com';  // Render.com deployed backend URL
 
 async function saveUserToDatabase(googleUser) {
     try {
@@ -216,17 +216,26 @@ async function getUserData(email) {
         
         // First check if server is reachable
         try {
-            const statusResponse = await fetch(`${API_URL}/status`);
+            const statusResponse = await fetch(`${API_URL}/`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                },
+                mode: 'cors'
+            });
+            
             if (!statusResponse.ok) {
                 throw new Error('Server is not responding');
             }
+            
             const statusData = await statusResponse.json();
             console.log('Server status:', statusData);
         } catch (statusError) {
             console.error('Server status check failed:', statusError);
-            throw new Error('Cannot connect to server');
+            throw new Error('Cannot connect to server. Please try again later.');
         }
         
+        // Now fetch user data
         const response = await fetch(`${API_URL}/api/user/${email}`, {
             method: 'GET',
             headers: {

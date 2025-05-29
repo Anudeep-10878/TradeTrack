@@ -10,7 +10,7 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-    origin: ['https://tradetrack-journal.netlify.app', 'http://localhost:3000'],
+    origin: ['https://tradetrack-journal.netlify.app', 'http://localhost:3000', 'https://tradetrack-58e1.onrender.com'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     exposedHeaders: ['Content-Type', 'Authorization'],
@@ -22,6 +22,14 @@ app.use(cors({
 
 // Add OPTIONS handling for preflight requests
 app.options('*', cors());
+
+// Add CORS headers middleware
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+    next();
+});
 
 // Remove conflicting security headers
 app.use(express.json());
