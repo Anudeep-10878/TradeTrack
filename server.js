@@ -4,6 +4,10 @@ const { MongoClient, ServerApiVersion } = require('mongodb');
 const cors = require('cors');
 const mongoose = require('mongoose');
 
+// Set environment
+const NODE_ENV = process.env.NODE_ENV || 'development';
+console.log('Running in', NODE_ENV, 'mode');
+
 const app = express();
 
 // CORS configuration
@@ -84,6 +88,10 @@ const options = {
     serverSelectionTimeoutMS: 30000,
     socketTimeoutMS: 45000,
     connectTimeoutMS: 30000,
+    ssl: true,
+    sslValidate: true,
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
     serverApi: {
         version: ServerApiVersion.v1,
         strict: true,
@@ -107,8 +115,13 @@ async function connectToMongo() {
                 mongoClient = null;
             }
             
-            // Create new client
-            mongoClient = new MongoClient(uri, options);
+            // Create new client with TLS options
+            mongoClient = new MongoClient(uri, {
+                ...options,
+                tls: true,
+                tlsAllowInvalidCertificates: process.env.NODE_ENV !== 'production',
+                tlsAllowInvalidHostnames: process.env.NODE_ENV !== 'production'
+            });
             
             // Connect to the client
             await mongoClient.connect();
