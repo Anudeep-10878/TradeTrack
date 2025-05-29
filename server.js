@@ -10,7 +10,7 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-    origin: ['https://tradetrack-journal.netlify.app', 'http://localhost:3000', 'https://tradetrack-58e1.onrender.com'],
+    origin: ['https://tradetrack-journal.netlify.app', 'http://localhost:3000', 'https://tradetrack-58el.onrender.com'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     exposedHeaders: ['Content-Type', 'Authorization'],
