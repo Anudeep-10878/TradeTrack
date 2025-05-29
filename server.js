@@ -88,10 +88,10 @@ const options = {
     serverSelectionTimeoutMS: 30000,
     socketTimeoutMS: 45000,
     connectTimeoutMS: 30000,
-    ssl: true,
-    sslValidate: true,
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
+    tls: true,
+    tlsInsecure: true, // For Render.com environment
+    directConnection: true,
+    retryWrites: true,
     serverApi: {
         version: ServerApiVersion.v1,
         strict: true,
@@ -115,13 +115,8 @@ async function connectToMongo() {
                 mongoClient = null;
             }
             
-            // Create new client with TLS options
-            mongoClient = new MongoClient(uri, {
-                ...options,
-                tls: true,
-                tlsAllowInvalidCertificates: process.env.NODE_ENV !== 'production',
-                tlsAllowInvalidHostnames: process.env.NODE_ENV !== 'production'
-            });
+            // Create new client
+            mongoClient = new MongoClient(uri, options);
             
             // Connect to the client
             await mongoClient.connect();
