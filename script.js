@@ -1291,23 +1291,22 @@ async function editTrade(tradeId) {
         // Show loading state
         showNotification('Loading trade data...', 'info');
 
-        // Fetch trade data
-        const response = await fetch(`${API_URL}/api/trade/${user.email}/${tradeId}`);
-        
+        // First get all trades
+        const response = await fetch(`${API_URL}/api/trades/${user.email}`);
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || 'Failed to fetch trade data');
+            throw new Error('Failed to fetch trades');
         }
 
-        const trade = await response.json();
-        
+        const trades = await response.json();
+        const trade = trades.find(t => t._id === tradeId);
+
         if (!trade) {
-            throw new Error('No trade data received');
+            throw new Error('Trade not found');
         }
 
         // Populate modal with trade data
         document.getElementById('editTradeId').value = trade._id;
-        document.getElementById('editTradeName').value = trade.name || trade.positionName;
+        document.getElementById('editTradeName').value = trade.positionName;
         document.getElementById('editTradeDate').value = trade.date.split('T')[0];
         document.getElementById('editQuantity').value = trade.quantity;
         document.getElementById('editEntryPrice').value = trade.entryPrice;
