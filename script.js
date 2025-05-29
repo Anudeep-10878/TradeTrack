@@ -1255,7 +1255,12 @@ function displayLibraryTrades(trades) {
         
         row.innerHTML = `
             <td>${new Date(trade.date).toLocaleDateString()}</td>
-            <td>${trade.name}</td>
+            <td>
+                <div class="trade-name">
+                    <span class="trade-title">${trade.name}</span>
+                    <span class="position-name">${trade.positionName || trade.name}</span>
+                </div>
+            </td>
             <td>${trade.quantity}</td>
             <td>₹${parseFloat(trade.entryPrice).toFixed(2)}</td>
             <td>₹${parseFloat(trade.exitPrice).toFixed(2)}</td>
