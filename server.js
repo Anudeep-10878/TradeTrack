@@ -87,7 +87,7 @@ console.log('Current environment:', process.env.NODE_ENV);
 // Environment-specific options
 const isProd = process.env.NODE_ENV === 'production';
 
-// Basic connection options
+// Simplified connection options with modern TLS settings
 const options = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -95,11 +95,9 @@ const options = {
     serverSelectionTimeoutMS: 10000,
     socketTimeoutMS: 45000,
     connectTimeoutMS: 30000,
-    // Explicit SSL configuration
-    ssl: true,
-    sslValidate: false,
-    checkServerIdentity: false,
-    // Additional options
+    tls: true,
+    tlsAllowInvalidCertificates: true,
+    tlsInsecure: true,
     retryWrites: true,
     w: 'majority'
 };
@@ -113,9 +111,9 @@ async function connectToMongo() {
         try {
             console.log(`Attempting to connect to MongoDB (attempt ${retryCount + 1} of ${maxRetries})...`);
             console.log('Connection options:', {
-                ssl: options.ssl,
-                sslValidate: options.sslValidate,
-                checkServerIdentity: options.checkServerIdentity
+                tls: options.tls,
+                tlsAllowInvalidCertificates: options.tlsAllowInvalidCertificates,
+                tlsInsecure: options.tlsInsecure
             });
             
             // Close existing connection if any
