@@ -1175,6 +1175,12 @@ footer {
     max-width: 400px;
     width: 90%;
     text-align: center;
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+}
+
+.modal.show .modal-content {
+    transform: translateY(0);
 }
 
 #loginModal h2 {
@@ -1205,6 +1211,7 @@ footer {
     cursor: pointer;
     opacity: 0.7;
     transition: opacity 0.3s ease;
+    z-index: 1;
 }
 
 .close-modal:hover {
@@ -1224,6 +1231,7 @@ footer {
     #loginModal .modal-content {
         width: 95%;
         padding: 1.5rem;
+        margin: 1rem;
     }
 
     #loginModal h2 {

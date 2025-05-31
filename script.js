@@ -33,24 +33,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Modal handling with improved error handling
+// CTA and Login Modal Handling
 document.addEventListener('DOMContentLoaded', () => {
-    const modal = document.getElementById('loginModal');
+    const loginModal = document.getElementById('loginModal');
     const closeModal = document.querySelector('#loginModal .close-modal');
     const ctaButtons = document.querySelectorAll('.cta-button, .get-started-btn');
 
-    if (!modal) {
+    if (!loginModal) {
         console.error('Login modal not found');
-        return;
-    }
-
-    if (!closeModal) {
-        console.error('Close modal button not found');
-        return;
-    }
-
-    if (!ctaButtons.length) {
-        console.error('No CTA buttons found');
         return;
     }
 
@@ -72,45 +62,52 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Show login modal
-            modal.style.display = 'flex';
-            setTimeout(() => {
-                modal.classList.add('show');
-            }, 10);
-            document.body.style.overflow = 'hidden'; // Prevent scrolling
+            showModal('loginModal');
         });
     });
 
     // Close modal when clicking the close button
-    closeModal.addEventListener('click', () => {
-        modal.classList.remove('show');
-        setTimeout(() => {
-            modal.style.display = 'none';
-        }, 300);
-        document.body.style.overflow = ''; // Restore scrolling
-    });
+    if (closeModal) {
+        closeModal.addEventListener('click', () => {
+            closeModal('loginModal');
+        });
+    }
 
     // Close modal when clicking outside
     window.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            modal.classList.remove('show');
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
-            document.body.style.overflow = ''; // Restore scrolling
+        if (e.target === loginModal) {
+            closeModal('loginModal');
         }
     });
 
     // Add escape key handler
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal.classList.contains('show')) {
-            modal.classList.remove('show');
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
-            document.body.style.overflow = ''; // Restore scrolling
+        if (e.key === 'Escape' && loginModal.style.display === 'flex') {
+            closeModal('loginModal');
         }
     });
 });
+
+// Modal helper functions
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('show'), 10);
+    document.body.style.overflow = 'hidden'; // Prevent scrolling
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        document.body.style.overflow = ''; // Restore scrolling
+    }, 300);
+}
 
 // Function to update user profile in dashboard
 function updateUserProfile() {
