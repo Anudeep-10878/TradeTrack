@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion } = require('mongodb');
 const cors = require('cors');
 const mongoose = require('mongoose');
 
@@ -92,42 +92,52 @@ console.log('Current environment:', process.env.NODE_ENV);
 // Environment-specific options
 const isProd = process.env.NODE_ENV === 'production';
 
-// MongoDB connection configuration
-const mongoOptions = {
-    serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-    },
-    maxPoolSize: 50,
-    minPoolSize: 10,
-    maxIdleTimeMS: 45000,
-    connectTimeoutMS: 30000,
+// Simplified connection options
+const options = {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    maxPoolSize: 10,
     serverSelectionTimeoutMS: 10000,
     socketTimeoutMS: 45000,
-    keepAlive: true
+    connectTimeoutMS: 30000,
+    retryWrites: true,
+    w: 'majority'
 };
 
-// Connect to MongoDB with enhanced retry logic and connection pooling
+// Connect to MongoDB with enhanced retry logic
 async function connectToMongo() {
     let retryCount = 0;
     const maxRetries = 5;
-    const retryDelay = 5000;
+    const retryDelay = 5000; // 5 seconds
 
     while (retryCount < maxRetries) {
         try {
             console.log(`Attempting to connect to MongoDB (attempt ${retryCount + 1} of ${maxRetries})...`);
+            console.log('Node.js version:', process.version);
+            console.log('MongoDB driver version:', require('mongodb/package.json').version);
             
             // Close existing connection if any
             if (mongoClient) {
+                console.log('Closing existing connection...');
                 await mongoClient.close();
                 mongoClient = null;
             }
             
-            // Create new client with optimized options
-            mongoClient = new MongoClient(uri, mongoOptions);
+            // Create new client with minimal options
+            mongoClient = new MongoClient(uri, {
+                serverApi: {
+                    version: ServerApiVersion.v1,
+                    strict: true,
+                    deprecationErrors: true,
+                },
+                maxPoolSize: 10,
+                serverSelectionTimeoutMS: 10000,
+                socketTimeoutMS: 45000,
+                connectTimeoutMS: 30000
+            });
             
             // Connect with timeout
+            console.log('Initiating connection...');
             await Promise.race([
                 mongoClient.connect(),
                 new Promise((_, reject) => 
@@ -135,51 +145,62 @@ async function connectToMongo() {
                 )
             ]);
             
-            console.log("Connected to MongoDB successfully!");
+            console.log("Connected to client!");
+            
+            // Get database instance
             db = mongoClient.db();
+            const dbName = db.databaseName;
+            console.log(`Selected database: ${dbName}`);
             
-            // Test connection and verify permissions
+            // Test the connection with ping
             await db.command({ ping: 1 });
-            const collections = await db.listCollections().toArray();
-            console.log(`Connected to database: ${db.databaseName} (${collections.length} collections)`);
+            console.log("Pinged your deployment. You successfully connected to MongoDB!");
             
-            // Setup connection monitoring
-            mongoClient.on('serverHeartbeatSucceeded', () => {
-                if (!isConnected) {
-                    console.log('MongoDB connection restored');
-                    isConnected = true;
-                }
+            // Try to list collections to verify permissions
+            const collections = await db.listCollections().toArray();
+            console.log(`Found ${collections.length} collections in database ${dbName}`);
+            
+            // Add event listeners for connection issues
+            mongoClient.on('serverClosed', () => {
+                console.log('MongoDB server connection closed');
+                isConnected = false;
+                setTimeout(() => connectToMongo(), retryDelay);
             });
 
-            mongoClient.on('serverHeartbeatFailed', () => {
-                console.warn('MongoDB heartbeat failed');
+            mongoClient.on('error', (err) => {
+                console.error('MongoDB connection error:', err);
                 isConnected = false;
-            });
-
-            mongoClient.on('close', () => {
-                console.warn('MongoDB connection closed');
-                isConnected = false;
-                setTimeout(() => {
-                    if (!isConnected) connectToMongo();
-                }, retryDelay);
             });
             
             isConnected = true;
             return true;
+        } catch (err) {
+            console.error(`Error connecting to MongoDB (attempt ${retryCount + 1}):`, {
+                name: err.name,
+                message: err.message,
+                code: err.code,
+                stack: err.stack
+            });
             
-        } catch (error) {
-            console.error(`MongoDB connection attempt ${retryCount + 1} failed:`, error);
-            retryCount++;
-            
-            if (retryCount === maxRetries) {
-                console.error('Max connection retries reached');
-                return false;
+            if (err.message.includes('bad auth')) {
+                console.error('Authentication failed. Please check your MongoDB username and password.');
+                console.error('Ensure MONGODB_URI environment variable is correctly set in Render.');
+            } else if (err.message.includes('connection timed out')) {
+                console.error('Connection timed out. Please check MongoDB Atlas Network Access settings.');
+                console.error('Ensure IP 0.0.0.0/0 is whitelisted in MongoDB Atlas.');
             }
             
-            await new Promise(resolve => setTimeout(resolve, retryDelay));
+            retryCount++;
+            if (retryCount < maxRetries) {
+                console.log(`Retrying in ${retryDelay/1000} seconds...`);
+                await new Promise(resolve => setTimeout(resolve, retryDelay));
+            } else {
+                console.error('Max retry attempts reached. Could not connect to MongoDB.');
+                isConnected = false;
+                return false;
+            }
         }
     }
-    return false;
 }
 
 // Graceful shutdown
@@ -326,10 +347,7 @@ app.get('/api/user/:email', checkDbConnection, async (req, res) => {
 app.post('/api/trade/:email', checkDbConnection, async (req, res) => {
     try {
         console.log('Received trade data:', req.body);
-        const tradeData = {
-            ...req.body,
-            _id: new ObjectId()  // Assign a new ObjectId to the trade
-        };
+        const tradeData = req.body;
         
         // Calculate profit/loss for this trade
         const quantity = Number(tradeData.quantity) || 0;
@@ -543,7 +561,7 @@ app.get('/api/trades/:email', authenticateUser, async (req, res) => {
 
 app.get('/api/trade/:email/:id', authenticateUser, async (req, res) => {
     try {
-        const trade = req.user.trades.find(t => t._id && t._id.toString() === req.params.id);
+        const trade = req.user.trades.find(t => t._id.toString() === req.params.id);
         if (!trade) {
             return res.status(404).json({ error: 'Trade not found' });
         }
@@ -556,94 +574,30 @@ app.get('/api/trade/:email/:id', authenticateUser, async (req, res) => {
 
 app.put('/api/trade/:email/:id', authenticateUser, async (req, res) => {
     try {
-        const { name, positionName, date, quantity, entryPrice, exitPrice, _id } = req.body;
+        const { name, date, quantity, entryPrice, exitPrice } = req.body;
         const trades = req.user.trades || [];
-        
-        // Convert string ID to ObjectId for comparison
-        const tradeIndex = trades.findIndex(t => t._id && t._id.toString() === req.params.id);
+        const tradeIndex = trades.findIndex(t => t._id.toString() === req.params.id);
         
         if (tradeIndex === -1) {
             return res.status(404).json({ error: 'Trade not found' });
         }
         
-        // Calculate profit/loss
-        const profit_loss = (Number(exitPrice) - Number(entryPrice)) * Number(quantity);
-        
-        // Update trade with new values while preserving the _id
         trades[tradeIndex] = {
-            _id: trades[tradeIndex]._id, // Keep the original ObjectId
+            ...trades[tradeIndex],
             name,
-            positionName,
             date,
-            quantity: Number(quantity),
-            entryPrice: Number(entryPrice),
-            exitPrice: Number(exitPrice),
-            profit_loss,
+            quantity,
+            entryPrice,
+            exitPrice,
             updatedAt: new Date()
         };
         
-        // Initialize metrics
-        let metrics = {
-            total_profit_loss: 0,
-            total_trades: trades.length,
-            winning_trades: 0,
-            losing_trades: 0,
-            win_rate: 0,
-            average_return: 0,
-            best_trade: Number.NEGATIVE_INFINITY,
-            worst_trade: Number.POSITIVE_INFINITY,
-            win_streak: 0,
-            current_win_streak: 0
-        };
-
-        // Calculate metrics from all trades
-        let current_win_streak = 0;
-        let max_win_streak = 0;
-
-        trades.forEach(trade => {
-            const tradePL = Number(trade.profit_loss) || 0;
-            metrics.total_profit_loss += tradePL;
-
-            if (tradePL > 0) {
-                metrics.winning_trades++;
-                current_win_streak++;
-                max_win_streak = Math.max(max_win_streak, current_win_streak);
-            } else {
-                metrics.losing_trades++;
-                current_win_streak = 0;
-            }
-
-            metrics.best_trade = Math.max(metrics.best_trade, tradePL);
-            metrics.worst_trade = Math.min(metrics.worst_trade, tradePL);
-        });
-
-        // Update final metrics
-        metrics.win_streak = max_win_streak;
-        metrics.current_win_streak = current_win_streak;
-        metrics.win_rate = trades.length > 0 ? (metrics.winning_trades / trades.length) * 100 : 0;
-        metrics.average_return = trades.length > 0 ? metrics.total_profit_loss / trades.length : 0;
-
-        // Handle edge cases for best/worst trade
-        if (metrics.best_trade === Number.NEGATIVE_INFINITY) metrics.best_trade = 0;
-        if (metrics.worst_trade === Number.POSITIVE_INFINITY) metrics.worst_trade = 0;
-
-        // Update user with new trades and metrics
         await db.collection('users').updateOne(
             { email: req.params.email },
-            { 
-                $set: { 
-                    trades: trades,
-                    metrics: metrics,
-                    updatedAt: new Date()
-                }
-            }
+            { $set: { trades: trades } }
         );
         
-        res.json({ 
-            message: 'Trade updated successfully', 
-            trade: trades[tradeIndex],
-            metrics: metrics
-        });
+        res.json({ message: 'Trade updated successfully', trade: trades[tradeIndex] });
     } catch (error) {
         console.error('Error updating trade:', error);
         res.status(500).json({ error: 'Failed to update trade' });
@@ -669,148 +623,6 @@ app.delete('/api/trade/:email/:id', authenticateUser, async (req, res) => {
         console.error('Error deleting trade:', error);
         res.status(500).json({ error: 'Failed to delete trade' });
     }
-});
-
-// Error handling middleware
-const errorHandler = (err, req, res, next) => {
-    console.error('Error:', {
-        message: err.message,
-        stack: err.stack,
-        timestamp: new Date().toISOString(),
-        path: req.path,
-        method: req.method,
-        query: req.query,
-        body: req.body,
-        user: req.user?.email
-    });
-
-    // Handle specific error types
-    if (err.name === 'ValidationError') {
-        return res.status(400).json({
-            error: 'Validation Error',
-            details: err.message
-        });
-    }
-
-    if (err.name === 'MongoError' || err.name === 'MongoServerError') {
-        if (err.code === 11000) {
-            return res.status(409).json({
-                error: 'Duplicate Entry',
-                details: 'This record already exists'
-            });
-        }
-        return res.status(503).json({
-            error: 'Database Error',
-            details: 'A database error occurred'
-        });
-    }
-
-    // Default error response
-    res.status(err.status || 500).json({
-        error: err.message || 'Internal Server Error',
-        status: err.status || 500
-    });
-};
-
-// Request logging middleware
-const requestLogger = (req, res, next) => {
-    const start = Date.now();
-    res.on('finish', () => {
-        const duration = Date.now() - start;
-        console.log({
-            timestamp: new Date().toISOString(),
-            method: req.method,
-            path: req.path,
-            status: res.statusCode,
-            duration: `${duration}ms`,
-            user: req.user?.email || 'anonymous'
-        });
-    });
-    next();
-};
-
-// Database connection checker middleware
-const dbConnectionChecker = (req, res, next) => {
-    if (!isConnected) {
-        console.warn('Database connection not available:', {
-            timestamp: new Date().toISOString(),
-            path: req.path,
-            method: req.method
-        });
-        return res.status(503).json({
-            error: 'Service Unavailable',
-            details: 'Database connection not available'
-        });
-    }
-    next();
-};
-
-// Add middleware to express app
-app.use(requestLogger);
-app.use(dbConnectionChecker);
-
-// Error handling must be last
-app.use(errorHandler);
-
-// Graceful shutdown handler
-const gracefulShutdown = async (signal) => {
-    console.log(`\n${signal} received. Starting graceful shutdown...`);
-    
-    // Set a timeout for the shutdown process
-    const shutdownTimeout = setTimeout(() => {
-        console.error('Forced shutdown due to timeout');
-        process.exit(1);
-    }, 10000);
-
-    try {
-        // Close MongoDB connection
-        if (mongoClient) {
-            console.log('Closing MongoDB connection...');
-            await mongoClient.close();
-            console.log('MongoDB connection closed');
-        }
-
-        // Close Express server
-        if (server) {
-            console.log('Closing Express server...');
-            await new Promise((resolve) => {
-                server.close(resolve);
-            });
-            console.log('Express server closed');
-        }
-
-        clearTimeout(shutdownTimeout);
-        console.log('Graceful shutdown completed');
-        process.exit(0);
-    } catch (error) {
-        console.error('Error during shutdown:', error);
-        clearTimeout(shutdownTimeout);
-        process.exit(1);
-    }
-};
-
-// Register shutdown handlers
-['SIGINT', 'SIGTERM', 'SIGQUIT'].forEach(signal => {
-    process.on(signal, () => gracefulShutdown(signal));
-});
-
-// Unhandled rejection handler
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled Rejection:', {
-        reason,
-        promise,
-        timestamp: new Date().toISOString()
-    });
-});
-
-// Uncaught exception handler
-process.on('uncaughtException', (error) => {
-    console.error('Uncaught Exception:', {
-        error: error.message,
-        stack: error.stack,
-        timestamp: new Date().toISOString()
-    });
-    gracefulShutdown('UNCAUGHT_EXCEPTION');
 });
 
 // Start server and connect to MongoDB
