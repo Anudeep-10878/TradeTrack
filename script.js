@@ -1248,7 +1248,10 @@ function displayLibraryTrades(trades) {
         return;
     }
 
-    trades.forEach(trade => {
+    // Sort trades by date in descending order (most recent first)
+    const sortedTrades = [...trades].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    sortedTrades.forEach(trade => {
         const row = document.createElement('tr');
         const profitLoss = calculatePL(trade.entryPrice, trade.exitPrice, trade.quantity);
         const isProfit = profitLoss >= 0;
