@@ -1267,12 +1267,12 @@ function displayLibraryTrades(trades) {
             <td>${trade.quantity}</td>
             <td>₹${parseFloat(trade.entryPrice).toFixed(2)}</td>
             <td>₹${parseFloat(trade.exitPrice).toFixed(2)}</td>
-            <td class="${isProfit ? 'profit' : 'loss'}">₹${Math.abs(profitLoss).toFixed(2)}</td>
+            <td class="${isProfit ? 'profit' : 'loss'}">${isProfit ? '+' : '-'}₹${Math.abs(profitLoss).toFixed(2)}</td>
             <td>
-                <button onclick="editTrade('${trade._id}')" class="edit-btn">
+                <button onclick="editTrade('${trade._id}')" class="edit-btn" data-trade-id="${trade._id}">
                     <i class="fas fa-edit"></i> Edit
                 </button>
-                <button onclick="deleteTrade('${trade._id}')" class="delete-btn">
+                <button onclick="deleteTrade('${trade._id}')" class="delete-btn" data-trade-id="${trade._id}">
                     <i class="fas fa-trash"></i> Delete
                 </button>
             </td>
@@ -1295,18 +1295,12 @@ async function editTrade(tradeId) {
         // Show loading state
         showNotification('Loading trade data...', 'info');
 
-        // Fetch trade data
-        const response = await fetch(`${API_URL}/api/trade/${user.email}/${tradeId}`);
-        
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || 'Failed to fetch trade data');
-        }
+        // Find the trade in the existing trades array first
+        const trades = user.trades || [];
+        const trade = trades.find(t => t._id === tradeId);
 
-        const trade = await response.json();
-        
         if (!trade) {
-            throw new Error('No trade data received');
+            throw new Error('Trade not found');
         }
 
         // Populate modal with trade data
