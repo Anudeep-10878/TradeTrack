@@ -577,7 +577,7 @@ app.get('/api/trade/:email/:id', authenticateUser, async (req, res) => {
 
 app.put('/api/trade/:email/:id', authenticateUser, async (req, res) => {
     try {
-        const { name, positionName, date, quantity, entryPrice, exitPrice } = req.body;
+        const { name, positionName, date, quantity, entryPrice, exitPrice, _id } = req.body;
         const trades = req.user.trades || [];
         
         // Convert string ID to ObjectId for comparison
@@ -592,7 +592,7 @@ app.put('/api/trade/:email/:id', authenticateUser, async (req, res) => {
         
         // Update trade with new values while preserving the _id
         trades[tradeIndex] = {
-            ...trades[tradeIndex],
+            _id: trades[tradeIndex]._id, // Keep the original ObjectId
             name,
             positionName,
             date,
@@ -603,7 +603,7 @@ app.put('/api/trade/:email/:id', authenticateUser, async (req, res) => {
             updatedAt: new Date()
         };
         
-        // Recalculate metrics
+        // Initialize metrics
         let metrics = {
             total_profit_loss: 0,
             total_trades: trades.length,
@@ -647,7 +647,7 @@ app.put('/api/trade/:email/:id', authenticateUser, async (req, res) => {
         // Handle edge cases for best/worst trade
         if (metrics.best_trade === Number.NEGATIVE_INFINITY) metrics.best_trade = 0;
         if (metrics.worst_trade === Number.POSITIVE_INFINITY) metrics.worst_trade = 0;
-        
+
         // Update user with new trades and metrics
         await db.collection('users').updateOne(
             { email: req.params.email },

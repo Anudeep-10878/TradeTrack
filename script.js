@@ -1365,11 +1365,13 @@ document.getElementById('editTradeForm').addEventListener('submit', async functi
         }
 
         const tradeData = {
+            name: document.getElementById('editTradeName').value,
             positionName: document.getElementById('editTradeName').value,
             date: document.getElementById('editTradeDate').value,
             quantity: parseInt(document.getElementById('editQuantity').value),
             entryPrice: parseFloat(document.getElementById('editEntryPrice').value),
-            exitPrice: parseFloat(document.getElementById('editExitPrice').value)
+            exitPrice: parseFloat(document.getElementById('editExitPrice').value),
+            _id: tradeId  // Preserve the trade ID
         };
 
         // Validate the data
@@ -1408,8 +1410,9 @@ document.getElementById('editTradeForm').addEventListener('submit', async functi
         const tradeIndex = trades.findIndex(t => t._id && t._id.toString() === tradeId);
         if (tradeIndex !== -1) {
             trades[tradeIndex] = result.trade;
+            user.trades = trades;  // Update the trades array
         }
-        user.trades = trades;
+   
         user.metrics = result.metrics;
         localStorage.setItem('user', JSON.stringify(user));
 
