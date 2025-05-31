@@ -1255,6 +1255,7 @@ function displayLibraryTrades(trades) {
         const row = document.createElement('tr');
         const profitLoss = calculatePL(trade.entryPrice, trade.exitPrice, trade.quantity);
         const isProfit = profitLoss >= 0;
+        const tradeId = trade._id ? trade._id.toString() : '';
         
         row.innerHTML = `
             <td>${new Date(trade.date).toLocaleDateString()}</td>
@@ -1269,10 +1270,10 @@ function displayLibraryTrades(trades) {
             <td>₹${parseFloat(trade.exitPrice).toFixed(2)}</td>
             <td class="${isProfit ? 'profit' : 'loss'}">${isProfit ? '+' : '-'}₹${Math.abs(profitLoss).toFixed(2)}</td>
             <td>
-                <button onclick="editTrade('${trade._id}')" class="edit-btn" data-trade-id="${trade._id}">
+                <button onclick="editTrade('${tradeId}')" class="edit-btn" data-trade-id="${tradeId}">
                     <i class="fas fa-edit"></i> Edit
                 </button>
-                <button onclick="deleteTrade('${trade._id}')" class="delete-btn" data-trade-id="${trade._id}">
+                <button onclick="deleteTrade('${tradeId}')" class="delete-btn" data-trade-id="${tradeId}">
                     <i class="fas fa-trash"></i> Delete
                 </button>
             </td>
@@ -1287,6 +1288,10 @@ function calculatePL(entryPrice, exitPrice, quantity) {
 
 async function editTrade(tradeId) {
     try {
+        if (!tradeId) {
+            throw new Error('Invalid trade ID');
+        }
+
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || !user.email) {
             throw new Error('User not authenticated');
@@ -1295,34 +1300,52 @@ async function editTrade(tradeId) {
         // Show loading state
         showNotification('Loading trade data...', 'info');
 
-        // Find the trade in the existing trades array first
+        // First try to find the trade in the existing trades array
         const trades = user.trades || [];
-        const trade = trades.find(t => t._id === tradeId);
+        const localTrade = trades.find(t => t._id && t._id.toString() === tradeId);
 
-        if (!trade) {
-            throw new Error('Trade not found');
+        if (localTrade) {
+            // If found locally, use that data
+            populateEditModal(localTrade);
+        } else {
+            // If not found locally, fetch from server
+            const response = await fetch(`${API_URL}/api/trade/${user.email}/${tradeId}`);
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to fetch trade data');
+            }
+
+            const trade = await response.json();
+            if (!trade) {
+                throw new Error('Trade not found');
+            }
+
+            populateEditModal(trade);
         }
-
-        // Populate modal with trade data
-        document.getElementById('editTradeId').value = trade._id;
-        document.getElementById('editTradeName').value = trade.positionName || trade.name || '';
-        document.getElementById('editTradeDate').value = new Date(trade.date).toISOString().split('T')[0];
-        document.getElementById('editQuantity').value = trade.quantity;
-        document.getElementById('editEntryPrice').value = parseFloat(trade.entryPrice).toFixed(2);
-        document.getElementById('editExitPrice').value = parseFloat(trade.exitPrice).toFixed(2);
-
-        // Show modal
-        const modal = document.getElementById('editTradeModal');
-        modal.style.display = 'flex';
-        setTimeout(() => modal.classList.add('show'), 10);
-
-        // Set max date to today
-        document.getElementById('editTradeDate').max = new Date().toISOString().split('T')[0];
 
     } catch (error) {
         console.error('Error in editTrade:', error);
         showNotification(error.message || 'Failed to load trade data', 'error');
     }
+}
+
+function populateEditModal(trade) {
+    // Populate modal with trade data
+    document.getElementById('editTradeId').value = trade._id;
+    document.getElementById('editTradeName').value = trade.positionName || trade.name || '';
+    document.getElementById('editTradeDate').value = new Date(trade.date).toISOString().split('T')[0];
+    document.getElementById('editQuantity').value = trade.quantity;
+    document.getElementById('editEntryPrice').value = parseFloat(trade.entryPrice).toFixed(2);
+    document.getElementById('editExitPrice').value = parseFloat(trade.exitPrice).toFixed(2);
+
+    // Show modal
+    const modal = document.getElementById('editTradeModal');
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('show'), 10);
+
+    // Set max date to today
+    document.getElementById('editTradeDate').max = new Date().toISOString().split('T')[0];
 }
 
 // Handle edit trade form submission

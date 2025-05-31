@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
 const mongoose = require('mongoose');
 
@@ -561,7 +561,7 @@ app.get('/api/trades/:email', authenticateUser, async (req, res) => {
 
 app.get('/api/trade/:email/:id', authenticateUser, async (req, res) => {
     try {
-        const trade = req.user.trades.find(t => t._id.toString() === req.params.id);
+        const trade = req.user.trades.find(t => t._id && t._id.toString() === req.params.id);
         if (!trade) {
             return res.status(404).json({ error: 'Trade not found' });
         }
