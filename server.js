@@ -92,52 +92,42 @@ console.log('Current environment:', process.env.NODE_ENV);
 // Environment-specific options
 const isProd = process.env.NODE_ENV === 'production';
 
-// Simplified connection options
-const options = {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    maxPoolSize: 10,
+// MongoDB connection configuration
+const mongoOptions = {
+    serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+    },
+    maxPoolSize: 50,
+    minPoolSize: 10,
+    maxIdleTimeMS: 45000,
+    connectTimeoutMS: 30000,
     serverSelectionTimeoutMS: 10000,
     socketTimeoutMS: 45000,
-    connectTimeoutMS: 30000,
-    retryWrites: true,
-    w: 'majority'
+    keepAlive: true
 };
 
-// Connect to MongoDB with enhanced retry logic
+// Connect to MongoDB with enhanced retry logic and connection pooling
 async function connectToMongo() {
     let retryCount = 0;
     const maxRetries = 5;
-    const retryDelay = 5000; // 5 seconds
+    const retryDelay = 5000;
 
     while (retryCount < maxRetries) {
         try {
             console.log(`Attempting to connect to MongoDB (attempt ${retryCount + 1} of ${maxRetries})...`);
-            console.log('Node.js version:', process.version);
-            console.log('MongoDB driver version:', require('mongodb/package.json').version);
             
             // Close existing connection if any
             if (mongoClient) {
-                console.log('Closing existing connection...');
                 await mongoClient.close();
                 mongoClient = null;
             }
             
-            // Create new client with minimal options
-            mongoClient = new MongoClient(uri, {
-                serverApi: {
-                    version: ServerApiVersion.v1,
-                    strict: true,
-                    deprecationErrors: true,
-                },
-                maxPoolSize: 10,
-                serverSelectionTimeoutMS: 10000,
-                socketTimeoutMS: 45000,
-                connectTimeoutMS: 30000
-            });
+            // Create new client with optimized options
+            mongoClient = new MongoClient(uri, mongoOptions);
             
             // Connect with timeout
-            console.log('Initiating connection...');
             await Promise.race([
                 mongoClient.connect(),
                 new Promise((_, reject) => 
@@ -145,62 +135,51 @@ async function connectToMongo() {
                 )
             ]);
             
-            console.log("Connected to client!");
-            
-            // Get database instance
+            console.log("Connected to MongoDB successfully!");
             db = mongoClient.db();
-            const dbName = db.databaseName;
-            console.log(`Selected database: ${dbName}`);
             
-            // Test the connection with ping
+            // Test connection and verify permissions
             await db.command({ ping: 1 });
-            console.log("Pinged your deployment. You successfully connected to MongoDB!");
-            
-            // Try to list collections to verify permissions
             const collections = await db.listCollections().toArray();
-            console.log(`Found ${collections.length} collections in database ${dbName}`);
+            console.log(`Connected to database: ${db.databaseName} (${collections.length} collections)`);
             
-            // Add event listeners for connection issues
-            mongoClient.on('serverClosed', () => {
-                console.log('MongoDB server connection closed');
-                isConnected = false;
-                setTimeout(() => connectToMongo(), retryDelay);
+            // Setup connection monitoring
+            mongoClient.on('serverHeartbeatSucceeded', () => {
+                if (!isConnected) {
+                    console.log('MongoDB connection restored');
+                    isConnected = true;
+                }
             });
 
-            mongoClient.on('error', (err) => {
-                console.error('MongoDB connection error:', err);
+            mongoClient.on('serverHeartbeatFailed', () => {
+                console.warn('MongoDB heartbeat failed');
                 isConnected = false;
+            });
+
+            mongoClient.on('close', () => {
+                console.warn('MongoDB connection closed');
+                isConnected = false;
+                setTimeout(() => {
+                    if (!isConnected) connectToMongo();
+                }, retryDelay);
             });
             
             isConnected = true;
             return true;
-        } catch (err) {
-            console.error(`Error connecting to MongoDB (attempt ${retryCount + 1}):`, {
-                name: err.name,
-                message: err.message,
-                code: err.code,
-                stack: err.stack
-            });
             
-            if (err.message.includes('bad auth')) {
-                console.error('Authentication failed. Please check your MongoDB username and password.');
-                console.error('Ensure MONGODB_URI environment variable is correctly set in Render.');
-            } else if (err.message.includes('connection timed out')) {
-                console.error('Connection timed out. Please check MongoDB Atlas Network Access settings.');
-                console.error('Ensure IP 0.0.0.0/0 is whitelisted in MongoDB Atlas.');
-            }
-            
+        } catch (error) {
+            console.error(`MongoDB connection attempt ${retryCount + 1} failed:`, error);
             retryCount++;
-            if (retryCount < maxRetries) {
-                console.log(`Retrying in ${retryDelay/1000} seconds...`);
-                await new Promise(resolve => setTimeout(resolve, retryDelay));
-            } else {
-                console.error('Max retry attempts reached. Could not connect to MongoDB.');
-                isConnected = false;
+            
+            if (retryCount === maxRetries) {
+                console.error('Max connection retries reached');
                 return false;
             }
+            
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
         }
     }
+    return false;
 }
 
 // Graceful shutdown
@@ -690,6 +669,148 @@ app.delete('/api/trade/:email/:id', authenticateUser, async (req, res) => {
         console.error('Error deleting trade:', error);
         res.status(500).json({ error: 'Failed to delete trade' });
     }
+});
+
+// Error handling middleware
+const errorHandler = (err, req, res, next) => {
+    console.error('Error:', {
+        message: err.message,
+        stack: err.stack,
+        timestamp: new Date().toISOString(),
+        path: req.path,
+        method: req.method,
+        query: req.query,
+        body: req.body,
+        user: req.user?.email
+    });
+
+    // Handle specific error types
+    if (err.name === 'ValidationError') {
+        return res.status(400).json({
+            error: 'Validation Error',
+            details: err.message
+        });
+    }
+
+    if (err.name === 'MongoError' || err.name === 'MongoServerError') {
+        if (err.code === 11000) {
+            return res.status(409).json({
+                error: 'Duplicate Entry',
+                details: 'This record already exists'
+            });
+        }
+        return res.status(503).json({
+            error: 'Database Error',
+            details: 'A database error occurred'
+        });
+    }
+
+    // Default error response
+    res.status(err.status || 500).json({
+        error: err.message || 'Internal Server Error',
+        status: err.status || 500
+    });
+};
+
+// Request logging middleware
+const requestLogger = (req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        console.log({
+            timestamp: new Date().toISOString(),
+            method: req.method,
+            path: req.path,
+            status: res.statusCode,
+            duration: `${duration}ms`,
+            user: req.user?.email || 'anonymous'
+        });
+    });
+    next();
+};
+
+// Database connection checker middleware
+const dbConnectionChecker = (req, res, next) => {
+    if (!isConnected) {
+        console.warn('Database connection not available:', {
+            timestamp: new Date().toISOString(),
+            path: req.path,
+            method: req.method
+        });
+        return res.status(503).json({
+            error: 'Service Unavailable',
+            details: 'Database connection not available'
+        });
+    }
+    next();
+};
+
+// Add middleware to express app
+app.use(requestLogger);
+app.use(dbConnectionChecker);
+
+// Error handling must be last
+app.use(errorHandler);
+
+// Graceful shutdown handler
+const gracefulShutdown = async (signal) => {
+    console.log(`\n${signal} received. Starting graceful shutdown...`);
+    
+    // Set a timeout for the shutdown process
+    const shutdownTimeout = setTimeout(() => {
+        console.error('Forced shutdown due to timeout');
+        process.exit(1);
+    }, 10000);
+
+    try {
+        // Close MongoDB connection
+        if (mongoClient) {
+            console.log('Closing MongoDB connection...');
+            await mongoClient.close();
+            console.log('MongoDB connection closed');
+        }
+
+        // Close Express server
+        if (server) {
+            console.log('Closing Express server...');
+            await new Promise((resolve) => {
+                server.close(resolve);
+            });
+            console.log('Express server closed');
+        }
+
+        clearTimeout(shutdownTimeout);
+        console.log('Graceful shutdown completed');
+        process.exit(0);
+    } catch (error) {
+        console.error('Error during shutdown:', error);
+        clearTimeout(shutdownTimeout);
+        process.exit(1);
+    }
+};
+
+// Register shutdown handlers
+['SIGINT', 'SIGTERM', 'SIGQUIT'].forEach(signal => {
+    process.on(signal, () => gracefulShutdown(signal));
+});
+
+// Unhandled rejection handler
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection:', {
+        reason,
+        promise,
+        timestamp: new Date().toISOString()
+    });
+});
+
+// Uncaught exception handler
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', {
+        error: error.message,
+        stack: error.stack,
+        timestamp: new Date().toISOString()
+    });
+    gracefulShutdown('UNCAUGHT_EXCEPTION');
 });
 
 // Start server and connect to MongoDB

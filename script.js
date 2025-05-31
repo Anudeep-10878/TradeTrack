@@ -893,70 +893,173 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Function to submit trade data
+    // Trade submission handler with optimized validation and error handling
     async function submitTrade(tradeData) {
         try {
             const user = JSON.parse(localStorage.getItem('user'));
-            if (!user || !user.email) {
+            if (!user?.email) {
                 throw new Error('User not authenticated');
             }
 
             // Validate trade data
-            if (!tradeData.positionName || !tradeData.quantity || !tradeData.entryPrice || !tradeData.exitPrice) {
-                throw new Error('Please fill in all required fields');
+            const validationErrors = validateTradeData(tradeData);
+            if (validationErrors.length > 0) {
+                throw new Error(`Invalid trade data: ${validationErrors.join(', ')}`);
             }
 
-            // Ensure numeric values
-            tradeData.quantity = Number(tradeData.quantity);
-            tradeData.entryPrice = Number(tradeData.entryPrice);
-            tradeData.exitPrice = Number(tradeData.exitPrice);
+            // Format numbers properly
+            const formattedTrade = {
+                ...tradeData,
+                quantity: Number(tradeData.quantity),
+                entryPrice: Number(tradeData.entryPrice),
+                exitPrice: Number(tradeData.exitPrice),
+                timestamp: new Date().toISOString()
+            };
 
-            if (isNaN(tradeData.quantity) || isNaN(tradeData.entryPrice) || isNaN(tradeData.exitPrice)) {
-                throw new Error('Invalid numeric values for quantity or prices');
+            // Try to submit to server first
+            try {
+                const response = await fetch(`${API_URL}/api/trade/${user.email}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formattedTrade)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Server error: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                // Update local storage with new trade data
+                updateLocalStorage(result.trades, result.metrics);
+                
+                // Update UI
+                updateDashboardMetrics(result.metrics);
+                updateRecentTrades(result.trades);
+                
+                showNotification('Trade added successfully', 'success');
+                return true;
+
+            } catch (serverError) {
+                console.error('Server error:', serverError);
+                
+                // Fallback to local storage if server is unavailable
+                const localTrades = JSON.parse(localStorage.getItem('trades') || '[]');
+                const localMetrics = JSON.parse(localStorage.getItem('metrics') || '{}');
+                
+                // Add trade locally
+                localTrades.unshift(formattedTrade);
+                
+                // Update local metrics
+                const updatedMetrics = calculateMetrics(localTrades);
+                
+                // Save to local storage
+                updateLocalStorage(localTrades, updatedMetrics);
+                
+                // Update UI
+                updateDashboardMetrics(updatedMetrics);
+                updateRecentTrades(localTrades);
+                
+                showNotification('Trade saved locally (offline mode)', 'warning');
+                return true;
             }
-
-            if (tradeData.quantity <= 0) {
-                throw new Error('Quantity must be greater than 0');
-            }
-
-            if (tradeData.entryPrice <= 0 || tradeData.exitPrice <= 0) {
-                throw new Error('Prices must be greater than 0');
-            }
-
-            const response = await fetch(`${API_URL}/api/trade/${user.email}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(tradeData)
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Failed to save trade');
-            }
-
-            // Update dashboard with new data
-            if (data.metrics) {
-                updateDashboardMetrics(data.metrics);
-            }
-            if (data.trades) {
-                updateRecentTrades(data.trades);
-            }
-
-            // Show success notification
-            showNotification('Trade saved successfully!', 'success');
-            
-            // Close the modal
-            hideNakedPositionModal();
-
-            return true;
         } catch (error) {
             console.error('Error submitting trade:', error);
-            showNotification(error.message || 'Failed to save trade. Please try again.', 'error');
+            showNotification(error.message, 'error');
             return false;
         }
+    }
+
+    // Trade data validation
+    function validateTradeData(trade) {
+        const errors = [];
+        
+        if (!trade.positionName?.trim()) {
+            errors.push('Position name is required');
+        }
+        
+        if (!trade.date) {
+            errors.push('Trade date is required');
+        } else {
+            const tradeDate = new Date(trade.date);
+            if (isNaN(tradeDate.getTime()) || tradeDate > new Date()) {
+                errors.push('Invalid trade date');
+            }
+        }
+        
+        if (!trade.quantity || isNaN(Number(trade.quantity)) || Number(trade.quantity) <= 0) {
+            errors.push('Invalid quantity');
+        }
+        
+        if (!trade.entryPrice || isNaN(Number(trade.entryPrice)) || Number(trade.entryPrice) <= 0) {
+            errors.push('Invalid entry price');
+        }
+        
+        if (!trade.exitPrice || isNaN(Number(trade.exitPrice)) || Number(trade.exitPrice) < 0) {
+            errors.push('Invalid exit price');
+        }
+        
+        return errors;
+    }
+
+    // Update local storage with new trade data
+    function updateLocalStorage(trades, metrics) {
+        try {
+            localStorage.setItem('trades', JSON.stringify(trades));
+            localStorage.setItem('metrics', JSON.stringify(metrics));
+        } catch (error) {
+            console.error('Error updating local storage:', error);
+            showNotification('Failed to save data locally', 'error');
+        }
+    }
+
+    // Calculate metrics from trades
+    function calculateMetrics(trades) {
+        const metrics = {
+            total_profit_loss: 0,
+            total_trades: trades.length,
+            winning_trades: 0,
+            losing_trades: 0,
+            win_rate: 0,
+            average_return: 0,
+            best_trade: Number.NEGATIVE_INFINITY,
+            worst_trade: Number.POSITIVE_INFINITY,
+            win_streak: 0,
+            current_win_streak: 0
+        };
+        
+        if (trades.length === 0) return metrics;
+        
+        let totalReturn = 0;
+        let currentStreak = 0;
+        
+        trades.forEach(trade => {
+            const pl = (Number(trade.exitPrice) - Number(trade.entryPrice)) * Number(trade.quantity);
+            
+            metrics.total_profit_loss += pl;
+            
+            if (pl > 0) {
+                metrics.winning_trades++;
+                currentStreak = currentStreak >= 0 ? currentStreak + 1 : 1;
+            } else if (pl < 0) {
+                metrics.losing_trades++;
+                currentStreak = currentStreak <= 0 ? currentStreak - 1 : -1;
+            }
+            
+            metrics.win_streak = Math.max(metrics.win_streak, currentStreak);
+            metrics.best_trade = Math.max(metrics.best_trade, pl);
+            metrics.worst_trade = Math.min(metrics.worst_trade, pl);
+            totalReturn += pl;
+        });
+        
+        metrics.win_rate = (metrics.winning_trades / metrics.total_trades) * 100;
+        metrics.average_return = totalReturn / metrics.total_trades;
+        metrics.current_win_streak = Math.max(0, currentStreak);
+        
+        return metrics;
     }
 
     // Event listener for naked position form submission
@@ -1112,78 +1215,175 @@ function showNotification(message, type = 'success') {
     }, 3000);
 }
 
-// Check authentication status
-function checkAuth() {
-    const user = localStorage.getItem('user');
-    
-    // Get the current page
-    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-    
-    if (!user) {
-        console.log('No user data found in localStorage');
-        if (currentPage !== 'index.html') {
-            console.log('Redirecting to login page');
-            window.location.replace('index.html');
-        }
-        return false;
+// User Authentication and Management System
+class AuthManager {
+    constructor() {
+        this.user = null;
+        this.isAuthenticated = false;
+        this.initializeFromStorage();
     }
 
-    try {
-        // Parse user data to verify it's valid JSON
-        const userData = JSON.parse(user);
-        console.log('Parsed user data:', userData);
-
-        if (!userData.email) {
-            console.error('Invalid user data - no email found');
-            localStorage.removeItem('user');
-            if (currentPage !== 'index.html') {
-                window.location.replace('index.html');
+    initializeFromStorage() {
+        try {
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+                this.user = JSON.parse(storedUser);
+                this.isAuthenticated = Boolean(this.user?.email);
             }
+        } catch (error) {
+            console.error('Error initializing auth from storage:', error);
+            this.clearAuth();
+        }
+    }
+
+    async handleGoogleSignIn(response) {
+        try {
+            if (!response?.credential) {
+                throw new Error('Invalid response from Google Sign-In');
+            }
+
+            const decoded = jwt_decode(response.credential);
+            if (!decoded?.email) {
+                throw new Error('Invalid user data from Google');
+            }
+
+            // Save to local storage first for immediate feedback
+            this.user = decoded;
+            this.isAuthenticated = true;
+            localStorage.setItem('user', JSON.stringify(decoded));
+
+            // Then try to save to server
+            try {
+                const serverUser = await this.saveToServer(decoded);
+                if (serverUser) {
+                    this.user = serverUser;
+                    localStorage.setItem('user', JSON.stringify(serverUser));
+                }
+            } catch (serverError) {
+                console.warn('Server sync failed:', serverError);
+                notificationManager.show('Signed in (offline mode)', 'warning');
+                return;
+            }
+
+            notificationManager.show('Signed in successfully', 'success');
+            window.location.href = 'dashboard.html';
+
+        } catch (error) {
+            console.error('Sign in error:', error);
+            this.clearAuth();
+            notificationManager.show(error.message, 'error');
+        }
+    }
+
+    async saveToServer(userData) {
+        const statusResponse = await fetch(`${API_URL}/status`);
+        const statusData = await statusResponse.json();
+        
+        if (!statusData || statusData.mongodb === 'disconnected') {
+            throw new Error('Server is not ready');
+        }
+
+        const response = await fetch(`${API_URL}/api/user`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: userData.email,
+                name: userData.name,
+                picture: userData.picture
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `Server error: ${response.status}`);
+        }
+
+        return await response.json();
+    }
+
+    async checkAuth() {
+        if (!this.isAuthenticated) {
+            this.redirectToLogin();
             return false;
         }
 
-        // If user exists and we're on index page, redirect to dashboard
-        if (currentPage === 'index.html') {
-            console.log('User already logged in, redirecting to dashboard');
-            window.location.replace('dashboard.html');
-            return false;
+        try {
+            const response = await fetch(`${API_URL}/api/user/${this.user.email}`);
+            if (!response.ok) {
+                throw new Error('Failed to verify user');
+            }
+
+            const userData = await response.json();
+            this.user = userData;
+            localStorage.setItem('user', JSON.stringify(userData));
+            return true;
+
+        } catch (error) {
+            console.warn('Server auth check failed:', error);
+            // Continue with local data if server is unavailable
+            return true;
         }
-        
-        // Update dashboard if we're on the dashboard page
-        if (currentPage === 'dashboard.html') {
-            console.log('Updating dashboard with user data');
-            
-            // First update UI with local data
-            updateUserProfile();
-            
-            // Then try to get updated data from server
-            getUserData(userData.email)
-                .then(updatedUser => {
-                    console.log('Received updated user data:', updatedUser);
-                    if (updatedUser) {
-                        localStorage.setItem('user', JSON.stringify(updatedUser));
-                        updateDashboardMetrics(updatedUser.metrics);
-                        if (updatedUser.trades) {
-                            updateRecentTrades(updatedUser.trades);
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching user data from server:', error);
-                    showNotification('Could not fetch latest data from server. Please check your internet connection and try again.', 'error');
-                });
-        }
-        
-        return true;
-    } catch (error) {
-        console.error('Error in checkAuth:', error);
+    }
+
+    clearAuth() {
+        this.user = null;
+        this.isAuthenticated = false;
         localStorage.removeItem('user');
+    }
+
+    redirectToLogin() {
+        const currentPage = window.location.pathname.split('/').pop() || 'index.html';
         if (currentPage !== 'index.html') {
             window.location.replace('index.html');
         }
-        return false;
+    }
+
+    redirectToDashboard() {
+        const currentPage = window.location.pathname.split('/').pop();
+        if (currentPage === 'index.html') {
+            window.location.replace('dashboard.html');
+        }
+    }
+
+    handleLogout() {
+        this.clearAuth();
+        this.redirectToLogin();
     }
 }
+
+// Initialize authentication manager
+const authManager = new AuthManager();
+
+// Setup Google Sign-In
+function initializeGoogleSignIn() {
+    if (!window.google?.accounts?.id) {
+        setTimeout(initializeGoogleSignIn, 100);
+        return;
+    }
+
+    google.accounts.id.initialize({
+        client_id: '${YOUR_GOOGLE_CLIENT_ID}',
+        callback: response => authManager.handleGoogleSignIn(response)
+    });
+
+    google.accounts.id.renderButton(
+        document.getElementById('googleSignInButton'),
+        { theme: 'outline', size: 'large', width: 250 }
+    );
+}
+
+// Initialize auth on page load
+document.addEventListener('DOMContentLoaded', async () => {
+    if (authManager.isAuthenticated) {
+        authManager.redirectToDashboard();
+        return;
+    }
+
+    // Initialize Google Sign-In if on login page
+    if (window.location.pathname.endsWith('index.html')) {
+        initializeGoogleSignIn();
+    }
+});
 
 // View Management
 function showView(viewId) {
@@ -1475,4 +1675,238 @@ window.addEventListener('click', function(e) {
         e.target.classList.remove('show');
         setTimeout(() => e.target.style.display = 'none', 300);
     }
-}); 
+});
+
+// Modal Management System
+class ModalManager {
+    constructor() {
+        this.activeModals = new Set();
+        this.setupGlobalListeners();
+    }
+
+    setupGlobalListeners() {
+        // Close modals on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.closeAllModals();
+            }
+        });
+
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                this.closeModal(e.target);
+            }
+        });
+    }
+
+    showModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('show'), 10);
+        this.activeModals.add(modal);
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeModal(modal) {
+        if (!modal) return;
+
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.style.display = 'none';
+            if (this.activeModals.size === 0) {
+                document.body.style.overflow = '';
+            }
+        }, 300);
+        this.activeModals.delete(modal);
+    }
+
+    closeAllModals() {
+        this.activeModals.forEach(modal => this.closeModal(modal));
+    }
+}
+
+// Initialize modal manager
+const modalManager = new ModalManager();
+
+// Enhanced notification system
+class NotificationManager {
+    constructor() {
+        this.container = document.createElement('div');
+        this.container.className = 'notification-container';
+        document.body.appendChild(this.container);
+    }
+
+    show(message, type = 'success', duration = 3000) {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        
+        this.container.appendChild(notification);
+        
+        // Trigger animation
+        requestAnimationFrame(() => notification.classList.add('show'));
+        
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, duration);
+    }
+}
+
+// Initialize notification manager
+const notificationManager = new NotificationManager();
+
+// Enhanced form validation
+class FormValidator {
+    static validateTradeForm(formData) {
+        const errors = [];
+        
+        // Required fields
+        const requiredFields = ['positionName', 'date', 'quantity', 'entryPrice', 'exitPrice'];
+        requiredFields.forEach(field => {
+            if (!formData.get(field)?.trim()) {
+                errors.push(`${field.replace(/([A-Z])/g, ' $1').toLowerCase()} is required`);
+            }
+        });
+        
+        // Numeric validation
+        const numericFields = ['quantity', 'entryPrice', 'exitPrice'];
+        numericFields.forEach(field => {
+            const value = Number(formData.get(field));
+            if (isNaN(value) || value <= 0) {
+                errors.push(`Invalid ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
+            }
+        });
+        
+        // Date validation
+        const tradeDate = new Date(formData.get('date'));
+        if (isNaN(tradeDate.getTime()) || tradeDate > new Date()) {
+            errors.push('Invalid trade date');
+        }
+        
+        return errors;
+    }
+}
+
+// Event Delegation Handler
+class EventHandler {
+    constructor() {
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        // Navigation handling
+        document.querySelectorAll('.nav-links a[data-view]').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.handleNavigation(e.target.closest('a').dataset.view);
+            });
+        });
+
+        // Form submissions
+        document.addEventListener('submit', async (e) => {
+            if (e.target.matches('#nakedPositionForm')) {
+                e.preventDefault();
+                await this.handleTradeSubmission(e.target);
+            } else if (e.target.matches('#editTradeForm')) {
+                e.preventDefault();
+                await this.handleTradeEdit(e.target);
+            }
+        });
+
+        // Button clicks
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('.add-trade-btn')) {
+                modalManager.showModal('addTradeModal');
+            } else if (e.target.matches('.close-modal, .cancel-trade-btn')) {
+                modalManager.closeModal(e.target.closest('.modal'));
+            } else if (e.target.matches('.delete-trade-btn')) {
+                this.handleTradeDelete(e.target.dataset.tradeId);
+            }
+        });
+    }
+
+    async handleTradeSubmission(form) {
+        const formData = new FormData(form);
+        const errors = FormValidator.validateTradeForm(formData);
+        
+        if (errors.length > 0) {
+            notificationManager.show(errors.join('\n'), 'error');
+            return;
+        }
+
+        const tradeData = {
+            date: formData.get('date'),
+            positionName: formData.get('positionName'),
+            quantity: Number(formData.get('quantity')),
+            entryPrice: Number(formData.get('entryPrice')),
+            exitPrice: Number(formData.get('exitPrice')),
+            entryReason: formData.get('entryReason'),
+            type: 'naked'
+        };
+
+        const success = await submitTrade(tradeData);
+        if (success) {
+            form.reset();
+            modalManager.closeModal(form.closest('.modal'));
+        }
+    }
+
+    handleNavigation(view) {
+        document.querySelectorAll('.view').forEach(v => {
+            v.style.display = v.id === `${view}-view` ? 'block' : 'none';
+        });
+
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.classList.toggle('active', link.dataset.view === view);
+        });
+
+        if (view === 'library') {
+            loadLibraryTrades();
+        }
+    }
+}
+
+// Initialize event handler
+const eventHandler = new EventHandler();
+
+// Add styles for notifications
+const style = document.createElement('style');
+style.textContent = `
+    .notification-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+    }
+    
+    .notification {
+        background: white;
+        padding: 15px 25px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        transform: translateX(120%);
+        transition: transform 0.3s ease;
+    }
+    
+    .notification.show {
+        transform: translateX(0);
+    }
+    
+    .notification.success {
+        border-left: 4px solid #4CAF50;
+    }
+    
+    .notification.error {
+        border-left: 4px solid #f44336;
+    }
+    
+    .notification.warning {
+        border-left: 4px solid #ff9800;
+    }
+`;
+document.head.appendChild(style); 
