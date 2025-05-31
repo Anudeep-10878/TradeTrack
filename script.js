@@ -1289,7 +1289,8 @@ function calculatePL(entryPrice, exitPrice, quantity) {
 async function editTrade(tradeId) {
     try {
         if (!tradeId) {
-            throw new Error('Invalid trade ID');
+            showNotification('Invalid trade ID', 'error');
+            return;
         }
 
         const user = JSON.parse(localStorage.getItem('user'));
@@ -1302,7 +1303,7 @@ async function editTrade(tradeId) {
 
         // First try to find the trade in the existing trades array
         const trades = user.trades || [];
-        const localTrade = trades.find(t => t._id && t._id.toString() === tradeId);
+        const localTrade = trades.find(t => t._id && t._id.toString() === tradeId.toString());
 
         if (localTrade) {
             // If found locally, use that data
@@ -1332,7 +1333,7 @@ async function editTrade(tradeId) {
 
 function populateEditModal(trade) {
     // Populate modal with trade data
-    document.getElementById('editTradeId').value = trade._id;
+    document.getElementById('editTradeId').value = trade._id.toString();
     document.getElementById('editTradeName').value = trade.positionName || trade.name || '';
     document.getElementById('editTradeDate').value = new Date(trade.date).toISOString().split('T')[0];
     document.getElementById('editQuantity').value = trade.quantity;
@@ -1359,6 +1360,10 @@ document.getElementById('editTradeForm').addEventListener('submit', async functi
         }
 
         const tradeId = document.getElementById('editTradeId').value;
+        if (!tradeId) {
+            throw new Error('Invalid trade ID');
+        }
+
         const tradeData = {
             positionName: document.getElementById('editTradeName').value,
             date: document.getElementById('editTradeDate').value,
@@ -1393,8 +1398,20 @@ document.getElementById('editTradeForm').addEventListener('submit', async functi
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to update trade');
+            throw new Error(errorData.error || 'Failed to update trade');
         }
+
+        const result = await response.json();
+
+        // Update local storage with new trade data
+        const trades = user.trades || [];
+        const tradeIndex = trades.findIndex(t => t._id && t._id.toString() === tradeId);
+        if (tradeIndex !== -1) {
+            trades[tradeIndex] = result.trade;
+        }
+        user.trades = trades;
+        user.metrics = result.metrics;
+        localStorage.setItem('user', JSON.stringify(user));
 
         // Close modal
         const modal = document.getElementById('editTradeModal');

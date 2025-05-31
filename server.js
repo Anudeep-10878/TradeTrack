@@ -347,7 +347,10 @@ app.get('/api/user/:email', checkDbConnection, async (req, res) => {
 app.post('/api/trade/:email', checkDbConnection, async (req, res) => {
     try {
         console.log('Received trade data:', req.body);
-        const tradeData = req.body;
+        const tradeData = {
+            ...req.body,
+            _id: new ObjectId()  // Assign a new ObjectId to the trade
+        };
         
         // Calculate profit/loss for this trade
         const quantity = Number(tradeData.quantity) || 0;
@@ -574,30 +577,94 @@ app.get('/api/trade/:email/:id', authenticateUser, async (req, res) => {
 
 app.put('/api/trade/:email/:id', authenticateUser, async (req, res) => {
     try {
-        const { name, date, quantity, entryPrice, exitPrice } = req.body;
+        const { name, positionName, date, quantity, entryPrice, exitPrice } = req.body;
         const trades = req.user.trades || [];
-        const tradeIndex = trades.findIndex(t => t._id.toString() === req.params.id);
+        
+        // Convert string ID to ObjectId for comparison
+        const tradeIndex = trades.findIndex(t => t._id && t._id.toString() === req.params.id);
         
         if (tradeIndex === -1) {
             return res.status(404).json({ error: 'Trade not found' });
         }
         
+        // Calculate profit/loss
+        const profit_loss = (Number(exitPrice) - Number(entryPrice)) * Number(quantity);
+        
+        // Update trade with new values while preserving the _id
         trades[tradeIndex] = {
             ...trades[tradeIndex],
             name,
+            positionName,
             date,
-            quantity,
-            entryPrice,
-            exitPrice,
+            quantity: Number(quantity),
+            entryPrice: Number(entryPrice),
+            exitPrice: Number(exitPrice),
+            profit_loss,
             updatedAt: new Date()
         };
         
+        // Recalculate metrics
+        let metrics = {
+            total_profit_loss: 0,
+            total_trades: trades.length,
+            winning_trades: 0,
+            losing_trades: 0,
+            win_rate: 0,
+            average_return: 0,
+            best_trade: Number.NEGATIVE_INFINITY,
+            worst_trade: Number.POSITIVE_INFINITY,
+            win_streak: 0,
+            current_win_streak: 0
+        };
+
+        // Calculate metrics from all trades
+        let current_win_streak = 0;
+        let max_win_streak = 0;
+
+        trades.forEach(trade => {
+            const tradePL = Number(trade.profit_loss) || 0;
+            metrics.total_profit_loss += tradePL;
+
+            if (tradePL > 0) {
+                metrics.winning_trades++;
+                current_win_streak++;
+                max_win_streak = Math.max(max_win_streak, current_win_streak);
+            } else {
+                metrics.losing_trades++;
+                current_win_streak = 0;
+            }
+
+            metrics.best_trade = Math.max(metrics.best_trade, tradePL);
+            metrics.worst_trade = Math.min(metrics.worst_trade, tradePL);
+        });
+
+        // Update final metrics
+        metrics.win_streak = max_win_streak;
+        metrics.current_win_streak = current_win_streak;
+        metrics.win_rate = trades.length > 0 ? (metrics.winning_trades / trades.length) * 100 : 0;
+        metrics.average_return = trades.length > 0 ? metrics.total_profit_loss / trades.length : 0;
+
+        // Handle edge cases for best/worst trade
+        if (metrics.best_trade === Number.NEGATIVE_INFINITY) metrics.best_trade = 0;
+        if (metrics.worst_trade === Number.POSITIVE_INFINITY) metrics.worst_trade = 0;
+        
+        // Update user with new trades and metrics
         await db.collection('users').updateOne(
             { email: req.params.email },
-            { $set: { trades: trades } }
+            { 
+                $set: { 
+                    trades: trades,
+                    metrics: metrics,
+                    updatedAt: new Date()
+                }
+            }
         );
         
-        res.json({ message: 'Trade updated successfully', trade: trades[tradeIndex] });
+        res.json({ 
+            message: 'Trade updated successfully', 
+            trade: trades[tradeIndex],
+            metrics: metrics
+        });
     } catch (error) {
         console.error('Error updating trade:', error);
         res.status(500).json({ error: 'Failed to update trade' });
