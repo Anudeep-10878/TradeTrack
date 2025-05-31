@@ -1152,7 +1152,7 @@ footer {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: rgba(0, 0, 0, 0.8);
     z-index: 1000;
     justify-content: center;
     align-items: center;
@@ -1164,116 +1164,74 @@ footer {
     opacity: 1;
 }
 
-.modal-content {
+#loginModal .modal-content {
     background-color: var(--background-color);
-    padding: 25px;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 500px;
+    padding: 2rem;
+    border-radius: 8px;
     position: relative;
-    transform: scale(0.7);
-    transition: transform 0.3s ease;
-    border: 2px solid var(--border-color);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    color: var(--text-color);
+    border: 2px solid #FFD700;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.15);
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
 }
 
-.modal.show .modal-content {
-    transform: scale(1);
+#loginModal h2 {
+    color: #FFD700;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+#loginModal p {
+    color: var(--text-color);
+    margin-bottom: 2rem;
+    opacity: 0.8;
+}
+
+.login-options {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
 }
 
 .close-modal {
     position: absolute;
-    right: 15px;
-    top: 15px;
-    font-size: 24px;
-    cursor: pointer;
+    right: 1rem;
+    top: 1rem;
+    font-size: 1.5rem;
     color: var(--text-color);
+    cursor: pointer;
     opacity: 0.7;
-    transition: all 0.3s ease;
+    transition: opacity 0.3s ease;
 }
 
 .close-modal:hover {
     opacity: 1;
-    transform: scale(1.1);
 }
 
-#editTradeModal .form-group {
-    margin-bottom: 20px;
+/* Google Sign-In Button Container */
+.g_id_signin {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    margin-top: 1rem !important;
 }
 
-#editTradeModal h2 {
-    color: var(--text-color);
-    margin-bottom: 25px;
-    font-size: 1.5rem;
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-#editTradeModal .form-group label {
-    display: block;
-    margin-bottom: 8px;
-    color: var(--text-color);
-    font-weight: 500;
-    font-size: 0.9rem;
-}
-
-#editTradeModal .form-group input {
-    width: 100%;
-    padding: 10px 15px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    background-color: rgba(255, 255, 255, 0.05);
-    color: var(--text-color);
-    font-size: 1rem;
-    transition: all 0.3s ease;
-}
-
-#editTradeModal .form-group input:focus {
-    border-color: var(--primary-color);
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.1);
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-#editTradeModal .save-trade-btn {
-    background-color: var(--primary-color);
-    color: var(--background-color);
-    padding: 12px 24px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    width: 100%;
-    font-size: 1rem;
-    font-weight: 600;
-    margin-top: 20px;
-    transition: all 0.3s ease;
-}
-
-#editTradeModal .save-trade-btn:hover {
-    background-color: #F4C430;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
-}
-
-@media (max-width: 768px) {
-    #editTradeModal .modal-content {
+/* Mobile Responsiveness */
+@media (max-width: 480px) {
+    #loginModal .modal-content {
         width: 95%;
-        padding: 20px;
+        padding: 1.5rem;
     }
-    
-    #editTradeModal h2 {
-        font-size: 1.3rem;
-        margin-bottom: 20px;
+
+    #loginModal h2 {
+        font-size: 1.2rem;
     }
-    
-    #editTradeModal .form-group input {
-        font-size: 0.9rem;
-        padding: 8px 12px;
-    }
-    
-    #editTradeModal .save-trade-btn {
-        padding: 10px 20px;
-        font-size: 0.9rem;
+
+    .login-options {
+        gap: 0.8rem;
     }
 }
 
@@ -1586,114 +1544,6 @@ footer {
 .loss {
     color: #f44336;
     font-weight: 600;
-}
-
-/* Edit Trade Modal Styles */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-    justify-content: center;
-    align-items: center;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.modal.show {
-    opacity: 1;
-}
-
-.modal-content {
-    background-color: #fff;
-    padding: 25px;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 500px;
-    position: relative;
-    transform: scale(0.7);
-    transition: transform 0.3s ease;
-}
-
-.modal.show .modal-content {
-    transform: scale(1);
-}
-
-.close-modal {
-    position: absolute;
-    right: 15px;
-    top: 15px;
-    font-size: 24px;
-    cursor: pointer;
-    color: #666;
-    transition: color 0.3s ease;
-}
-
-.close-modal:hover {
-    color: #333;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    color: #333;
-    font-weight: 500;
-}
-
-.form-group input {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
-}
-
-.form-group input:focus {
-    border-color: #4CAF50;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
-}
-
-.save-trade-btn {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 100%;
-    font-size: 16px;
-    margin-top: 10px;
-    transition: background-color 0.3s ease;
-}
-
-.save-trade-btn:hover {
-    background-color: #45a049;
-}
-
-/* Trade Name Styles in Library Table */
-.trade-name {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.trade-name .trade-title {
-    font-weight: 600;
-    color: var(--text-color);
-}
-
-.trade-name .position-name {
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.6);
 }
 
 /* Mobile Navigation */
@@ -1920,461 +1770,5 @@ footer {
     .form-group select,
     .form-group textarea {
         font-size: 0.875rem;
-    }
-}
-
-#loginModal .modal-content {
-    background-color: var(--background-color);
-    padding: 2rem;
-    border-radius: 8px;
-    position: relative;
-    color: var(--text-color);
-    border: 2px solid #FFD700;
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.15);
-    max-width: 400px;
-    width: 90%;
-}
-
-.position-type-selector {
-    margin: 0.5rem 0;
-}
-
-.position-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.position-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.8rem;
-    padding: 1rem;
-    background: transparent;
-    border: 2px solid rgba(255, 215, 0, 0.3);
-    color: #FFD700;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border-radius: 4px;
-    width: 100%;
-}
-
-.position-btn i {
-    font-size: 1.1rem;
-}
-
-.position-btn:hover {
-    border-color: #FFD700;
-    background: rgba(255, 215, 0, 0.1);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
-}
-
-.position-btn.active {
-    background: rgba(255, 215, 0, 0.15);
-    border-color: #FFD700;
-    color: #FFD700;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
-}
-
-.no-trades-message {
-    text-align: center;
-    padding: 2rem;
-    color: rgba(255, 255, 255, 0.6);
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 215, 0, 0.1);
-    border-radius: 8px;
-}
-
-.no-trades-message p {
-    margin: 0;
-    font-size: 0.9rem;
-}
-
-/* Naked Position Modal Styles */
-#nakedPositionModal .trade-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-#nakedPositionModal .form-row {
-    display: flex;
-    gap: 1rem;
-}
-
-#nakedPositionModal .form-group {
-    flex: 1;
-}
-
-#nakedPositionModal input[type="date"],
-#nakedPositionModal input[type="text"],
-#nakedPositionModal input[type="number"],
-#nakedPositionModal textarea {
-    width: 100%;
-    padding: 0.6rem;
-    border: 1px solid rgba(255, 215, 0, 0.2);
-    border-radius: 4px;
-    background-color: rgba(0, 0, 0, 0.3);
-    color: #fff;
-    font-size: 0.9rem;
-}
-
-#nakedPositionModal input:focus,
-#nakedPositionModal textarea:focus {
-    outline: none;
-    border-color: #FFD700;
-    box-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
-}
-
-#nakedPositionModal textarea {
-    resize: vertical;
-    min-height: 80px;
-}
-
-#nakedPositionModal label {
-    display: block;
-    margin-bottom: 0.3rem;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 0.85rem;
-}
-
-#nakedPositionModal .form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-#nakedPositionModal .submit-trade-btn,
-#nakedPositionModal .cancel-trade-btn {
-    padding: 0.6rem 1.2rem;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-#nakedPositionModal .submit-trade-btn {
-    background-color: #FFD700;
-    color: #000;
-    border: none;
-}
-
-#nakedPositionModal .submit-trade-btn:hover {
-    background-color: #F4C430;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.2);
-}
-
-#nakedPositionModal .cancel-trade-btn {
-    background-color: transparent;
-    color: #ccc;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-#nakedPositionModal .cancel-trade-btn:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-/* Responsive styles for naked position modal */
-@media (max-width: 480px) {
-    #nakedPositionModal .form-row {
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    #nakedPositionModal .form-actions {
-        flex-direction: column-reverse;
-        gap: 0.5rem;
-    }
-
-    #nakedPositionModal .submit-trade-btn,
-    #nakedPositionModal .cancel-trade-btn {
-        width: 100%;
-        padding: 0.8rem;
-    }
-}
-
-/* Notification Styles */
-.notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 1rem 2rem;
-    border-radius: 8px;
-    color: #fff;
-    font-weight: 500;
-    z-index: 10000;
-    opacity: 0;
-    transform: translateY(-20px);
-    transition: all 0.3s ease;
-}
-
-.notification.show {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.notification.success {
-    background-color: #4CAF50;
-    border: 1px solid #43A047;
-    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
-}
-
-.notification.error {
-    background-color: #f44336;
-    border: 1px solid #e53935;
-    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.2);
-}
-
-.library-container {
-    padding: 20px;
-    background: var(--bg-secondary);
-    border-radius: 10px;
-    margin: 20px;
-}
-
-.trades-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    background: var(--background-color);
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.trades-table table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.trades-table th,
-.trades-table td {
-    padding: 12px 15px;
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.trades-table th {
-    background-color: rgba(255, 215, 0, 0.1);
-    font-weight: 600;
-    color: var(--primary-color);
-    white-space: nowrap;
-}
-
-.trades-table tr:hover {
-    background-color: rgba(255, 255, 255, 0.03);
-}
-
-.trades-table .no-trades {
-    text-align: center;
-    padding: 20px;
-    color: rgba(255, 255, 255, 0.6);
-}
-
-/* Trade Name Styles in Library Table */
-.trade-name {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.trade-name .trade-title {
-    font-weight: 600;
-    color: var(--text-color);
-}
-
-.trade-name .position-name {
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.6);
-}
-
-/* Edit and Delete Buttons */
-.edit-btn,
-.delete-btn {
-    padding: 8px 12px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    margin: 0 4px;
-    display: inline-flex;
-    align-items: center;
-    transition: all 0.3s ease;
-}
-
-.edit-btn {
-    background-color: var(--primary-color);
-    color: var(--background-color);
-}
-
-.edit-btn:hover {
-    background-color: #F4C430;
-    transform: translateY(-1px);
-}
-
-.delete-btn {
-    background-color: rgba(244, 67, 54, 0.1);
-    color: #f44336;
-    border: 1px solid rgba(244, 67, 54, 0.3);
-}
-
-.delete-btn:hover {
-    background-color: rgba(244, 67, 54, 0.2);
-    transform: translateY(-1px);
-}
-
-.edit-btn i,
-.delete-btn i {
-    margin-right: 6px;
-}
-
-/* Profit/Loss Colors */
-.profit {
-    color: #4CAF50;
-    font-weight: 600;
-}
-
-.loss {
-    color: #f44336;
-    font-weight: 600;
-}
-
-/* Edit Trade Modal Styles */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    z-index: 1000;
-    justify-content: center;
-    align-items: center;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.modal.show {
-    opacity: 1;
-}
-
-.modal-content {
-    background-color: var(--background-color);
-    padding: 25px;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 500px;
-    position: relative;
-    transform: scale(0.7);
-    transition: transform 0.3s ease;
-    border: 2px solid var(--border-color);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-.modal.show .modal-content {
-    transform: scale(1);
-}
-
-.close-modal {
-    position: absolute;
-    right: 15px;
-    top: 15px;
-    font-size: 24px;
-    cursor: pointer;
-    color: var(--text-color);
-    opacity: 0.7;
-    transition: all 0.3s ease;
-}
-
-.close-modal:hover {
-    opacity: 1;
-    transform: scale(1.1);
-}
-
-#editTradeModal .form-group {
-    margin-bottom: 20px;
-}
-
-#editTradeModal h2 {
-    color: var(--text-color);
-    margin-bottom: 25px;
-    font-size: 1.5rem;
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-#editTradeModal .form-group label {
-    display: block;
-    margin-bottom: 8px;
-    color: var(--text-color);
-    font-weight: 500;
-    font-size: 0.9rem;
-}
-
-#editTradeModal .form-group input {
-    width: 100%;
-    padding: 10px 15px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    background-color: rgba(255, 255, 255, 0.05);
-    color: var(--text-color);
-    font-size: 1rem;
-    transition: all 0.3s ease;
-}
-
-#editTradeModal .form-group input:focus {
-    border-color: var(--primary-color);
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.1);
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-#editTradeModal .save-trade-btn {
-    background-color: var(--primary-color);
-    color: var(--background-color);
-    padding: 12px 24px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    width: 100%;
-    font-size: 1rem;
-    font-weight: 600;
-    margin-top: 20px;
-    transition: all 0.3s ease;
-}
-
-#editTradeModal .save-trade-btn:hover {
-    background-color: #F4C430;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
-}
-
-@media (max-width: 768px) {
-    #editTradeModal .modal-content {
-        width: 95%;
-        padding: 20px;
-    }
-    
-    #editTradeModal h2 {
-        font-size: 1.3rem;
-        margin-bottom: 20px;
-    }
-    
-    #editTradeModal .form-group input {
-        font-size: 0.9rem;
-        padding: 8px 12px;
-    }
-    
-    #editTradeModal .save-trade-btn {
-        padding: 10px 20px;
-        font-size: 0.9rem;
     }
 } 

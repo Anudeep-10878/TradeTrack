@@ -33,45 +33,83 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Modal handling
+// Modal handling with improved error handling
 document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('loginModal');
     const closeModal = document.querySelector('#loginModal .close-modal');
     const ctaButtons = document.querySelectorAll('.cta-button, .get-started-btn');
 
-    if (modal && closeModal && ctaButtons) {
-        // Open modal when CTA buttons are clicked
-        ctaButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                e.preventDefault();
-                modal.style.display = 'flex';
-                setTimeout(() => {
-                    modal.classList.add('show');
-                }, 10);
-                document.body.style.overflow = 'hidden'; // Prevent scrolling
-            });
-        });
+    if (!modal) {
+        console.error('Login modal not found');
+        return;
+    }
 
-        // Close modal when clicking the close button
-        closeModal.addEventListener('click', () => {
+    if (!closeModal) {
+        console.error('Close modal button not found');
+        return;
+    }
+
+    if (!ctaButtons.length) {
+        console.error('No CTA buttons found');
+        return;
+    }
+
+    // Initialize Google Sign-In
+    initializeGoogleSignIn();
+
+    // Open modal when CTA buttons are clicked
+    ctaButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('CTA button clicked');
+            
+            // Check if user is already logged in
+            const user = localStorage.getItem('user');
+            if (user) {
+                console.log('User already logged in, redirecting to dashboard');
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            // Show login modal
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.classList.add('show');
+            }, 10);
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+        });
+    });
+
+    // Close modal when clicking the close button
+    closeModal.addEventListener('click', () => {
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
+        document.body.style.overflow = ''; // Restore scrolling
+    });
+
+    // Close modal when clicking outside
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) {
             modal.classList.remove('show');
             setTimeout(() => {
                 modal.style.display = 'none';
             }, 300);
             document.body.style.overflow = ''; // Restore scrolling
-        });
+        }
+    });
 
-        // Close modal when clicking outside
-        window.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.remove('show');
-                setTimeout(() => {
-                    modal.style.display = 'none';
-                }, 300);
-                document.body.style.overflow = ''; // Restore scrolling
-            }
-        });
-    }
+    // Add escape key handler
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('show')) {
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+            document.body.style.overflow = ''; // Restore scrolling
+        }
+    });
 });
 
 // Function to update user profile in dashboard
@@ -1354,36 +1392,40 @@ class AuthManager {
 // Initialize authentication manager
 const authManager = new AuthManager();
 
-// Setup Google Sign-In
+// Initialize Google Sign-In
 function initializeGoogleSignIn() {
     if (!window.google?.accounts?.id) {
+        console.log('Waiting for Google Sign-In library to load...');
         setTimeout(initializeGoogleSignIn, 100);
         return;
     }
 
-    google.accounts.id.initialize({
-        client_id: '${YOUR_GOOGLE_CLIENT_ID}',
-        callback: response => authManager.handleGoogleSignIn(response)
-    });
+    try {
+        google.accounts.id.initialize({
+            client_id: '417119645317-l1rbcfc2c0fm90tm6ado1dblk2f68cdp.apps.googleusercontent.com',
+            callback: handleCredentialResponse,
+            auto_select: true,
+            cancel_on_tap_outside: false
+        });
 
-    google.accounts.id.renderButton(
-        document.getElementById('googleSignInButton'),
-        { theme: 'outline', size: 'large', width: 250 }
-    );
+        // Initialize the sign-in button
+        const signInDiv = document.querySelector('.g_id_signin');
+        if (signInDiv) {
+            google.accounts.id.renderButton(signInDiv, {
+                type: 'standard',
+                size: 'large',
+                theme: 'filled_black',
+                text: 'sign_in_with',
+                shape: 'rectangular',
+                logo_alignment: 'left'
+            });
+        }
+
+        console.log('Google Sign-In initialized successfully');
+    } catch (error) {
+        console.error('Error initializing Google Sign-In:', error);
+    }
 }
-
-// Initialize auth on page load
-document.addEventListener('DOMContentLoaded', async () => {
-    if (authManager.isAuthenticated) {
-        authManager.redirectToDashboard();
-        return;
-    }
-
-    // Initialize Google Sign-In if on login page
-    if (window.location.pathname.endsWith('index.html')) {
-        initializeGoogleSignIn();
-    }
-});
 
 // View Management
 function showView(viewId) {
