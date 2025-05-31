@@ -406,8 +406,8 @@ function updateRecentTrades(trades) {
         return;
     }
 
-    // Get the most recent 5 trades
-    const recentTrades = trades.slice(-5).reverse();
+    // Get the most recent 3 trades
+    const recentTrades = trades.slice(-3).reverse();
     
     tradesList.innerHTML = recentTrades.map(trade => `
         <div class="trade-item ${trade.profit_loss >= 0 ? 'profit' : 'loss'}">
@@ -417,7 +417,7 @@ function updateRecentTrades(trades) {
             </div>
             <div class="trade-result">
                 <p class="${trade.profit_loss >= 0 ? 'profit' : 'loss'}">
-                    ${trade.profit_loss >= 0 ? '+' : ''}₹${Math.abs(trade.profit_loss).toFixed(2)}
+                    ${trade.profit_loss >= 0 ? '+₹' : '-₹'}${Math.abs(trade.profit_loss).toFixed(2)}
                 </p>
                 <span class="percentage">
                     ${((trade.exitPrice - trade.entryPrice) / trade.entryPrice * 100).toFixed(1)}%
@@ -1311,16 +1311,19 @@ async function editTrade(tradeId) {
 
         // Populate modal with trade data
         document.getElementById('editTradeId').value = trade._id;
-        document.getElementById('editTradeName').value = trade.name || trade.positionName;
-        document.getElementById('editTradeDate').value = trade.date.split('T')[0];
+        document.getElementById('editTradeName').value = trade.positionName || trade.name || '';
+        document.getElementById('editTradeDate').value = new Date(trade.date).toISOString().split('T')[0];
         document.getElementById('editQuantity').value = trade.quantity;
-        document.getElementById('editEntryPrice').value = trade.entryPrice;
-        document.getElementById('editExitPrice').value = trade.exitPrice;
+        document.getElementById('editEntryPrice').value = parseFloat(trade.entryPrice).toFixed(2);
+        document.getElementById('editExitPrice').value = parseFloat(trade.exitPrice).toFixed(2);
 
         // Show modal
         const modal = document.getElementById('editTradeModal');
         modal.style.display = 'flex';
         setTimeout(() => modal.classList.add('show'), 10);
+
+        // Set max date to today
+        document.getElementById('editTradeDate').max = new Date().toISOString().split('T')[0];
 
     } catch (error) {
         console.error('Error in editTrade:', error);
@@ -1340,13 +1343,25 @@ document.getElementById('editTradeForm').addEventListener('submit', async functi
 
         const tradeId = document.getElementById('editTradeId').value;
         const tradeData = {
-            name: document.getElementById('editTradeName').value,
             positionName: document.getElementById('editTradeName').value,
             date: document.getElementById('editTradeDate').value,
             quantity: parseInt(document.getElementById('editQuantity').value),
             entryPrice: parseFloat(document.getElementById('editEntryPrice').value),
             exitPrice: parseFloat(document.getElementById('editExitPrice').value)
         };
+
+        // Validate the data
+        if (!tradeData.positionName || !tradeData.quantity || !tradeData.entryPrice || !tradeData.exitPrice) {
+            throw new Error('Please fill in all required fields');
+        }
+
+        if (tradeData.quantity <= 0) {
+            throw new Error('Quantity must be greater than 0');
+        }
+
+        if (tradeData.entryPrice <= 0 || tradeData.exitPrice <= 0) {
+            throw new Error('Prices must be greater than 0');
+        }
 
         // Show loading state
         showNotification('Updating trade...', 'info');
